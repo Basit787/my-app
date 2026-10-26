@@ -1,0 +1,289 @@
+# The whole local stack (`make up`): shared services, then every backend and frontend in its own container with
+# hot reload. Images come from docker/backend and docker/frontend; optional overrides go in ./.env.
+name: my-project
+
+# Every app container: its folder mounted for hot reload (node_modules stay the image's) and the shared packages' dist/
+x-app: &app
+  restart: unless-stopped
+  volumes_from:
+    - packages:ro
+
+x-backend-env: &backend-env
+  NODE_ENV: development
+  # File events don't reach containers on macOS; poll so `nest start --watch` reloads on edits
+  TSC_WATCHFILE: DynamicPriorityPolling
+  TSC_WATCHDIRECTORY: DynamicPriorityPolling
+  JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+  AUTH_URL: http://auth:3001
+  MINIO_ENDPOINT: http://minio:9000
+  MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+  MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+  REDIS_URL: redis://redis:6379
+  OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports: ["27018:27017"]
+    volumes: [mongo_data:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports: ["5433:5432"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: link_shortener
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports: ["6379:6379"]
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+
+  minio:
+    image: pgsty/minio:latest # minio/minio left Docker Hub; community build
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports: ["9000:9000", "9001:9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes: [minio_data:/data]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+
+  coturn:
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    ports: ["3478:3478/tcp", "3478:3478/udp"]
+    command: >
+      -n --log-file=stdout --listening-port=3478 --fingerprint --lt-cred-mech --realm=realtime-chat
+      --user=${TURN_USER:-chat}:${TURN_PASSWORD:-chatpass} --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}
+
+  # Serves Ollama and pulls the model on first start; healthy only once the model is present
+  ollama:
+    image: alpine/ollama:latest
+    restart: unless-stopped
+    ports: ["11434:11434"]
+    environment:
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
+      OLLAMA_KEEP_ALIVE: 30m
+      OLLAMA_CONTEXT_LENGTH: "8192"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+    volumes: [ollama_data:/root/.ollama]
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        ollama serve & pid=$$!
+        trap 'kill $$pid' TERM INT
+        until ollama list >/dev/null 2>&1; do sleep 1; done
+        ollama show "$$OLLAMA_MODEL" >/dev/null 2>&1 || ollama pull "$$OLLAMA_MODEL"
+        wait $$pid
+    healthcheck:
+      test: ["CMD-SHELL", "ollama show \"$$OLLAMA_MODEL\" >/dev/null"]
+      interval: 10s
+      start_period: 15m
+      start_interval: 5s
+
+  # Watches the shared packages and shares their dist/ with every app container
+  packages:
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/home" } }
+    restart: unless-stopped
+    command: pnpm turbo run dev --filter="./packages/*" --env-mode=loose
+    environment:
+      # Vite never reads .d.ts, so my-ui and frontend-common skip them; backend-common and ports keep them for Nest
+      TSUP_DTS: "false"
+    volumes:
+      - ./packages/my-ui/src:/repo/packages/my-ui/src
+      - ./packages/frontend-common/src:/repo/packages/frontend-common/src
+      - ./packages/ports/src:/repo/packages/ports/src
+      - ./packages/backend-common/src:/repo/packages/backend-common/src
+      - my_ui_dist:/repo/packages/my-ui/dist
+      - frontend_common_dist:/repo/packages/frontend-common/dist
+      - ports_dist:/repo/packages/ports/dist
+      - backend_common_dist:/repo/packages/backend-common/dist
+
+  # Backends
+
+  auth:
+    <<: *app
+    build: { context: ., dockerfile: docker/backend/Dockerfile, target: dev, args: { APP: "@chat/auth" } }
+    ports: ["3001:3001"]
+    environment:
+      <<: *backend-env
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/auth
+    volumes: [./apps/auth:/repo/apps/auth, /repo/apps/auth/node_modules]
+    depends_on:
+      postgres: { condition: service_healthy }
+      minio: { condition: service_healthy }
+
+  chat-app-backend:
+    <<: *app
+    build: { context: ., dockerfile: docker/backend/Dockerfile, target: dev, args: { APP: "@chat/chat-app-backend" } }
+    ports: ["3002:3002"]
+    environment:
+      <<: *backend-env
+      MONGODB_URI: mongodb://mongo:27017/realtime_chat
+      TURN_USER: ${TURN_USER:-chat}
+      TURN_PASSWORD: ${TURN_PASSWORD:-chatpass}
+    volumes: [./apps/chat-app-backend:/repo/apps/chat-app-backend, /repo/apps/chat-app-backend/node_modules]
+    depends_on:
+      mongo: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      coturn: { condition: service_started }
+
+  link-shortener-backend:
+    <<: *app
+    build: { context: ., dockerfile: docker/backend/Dockerfile, target: dev, args: { APP: "@chat/link-shortener-backend" } }
+    ports: ["3012:3012"]
+    environment:
+      <<: *backend-env
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/link_shortener
+    volumes: [./apps/link-shortener-backend:/repo/apps/link-shortener-backend, /repo/apps/link-shortener-backend/node_modules]
+    depends_on:
+      postgres: { condition: service_healthy }
+      auth: { condition: service_started }
+
+  image-upload-backend:
+    <<: *app
+    build: { context: ., dockerfile: docker/backend/Dockerfile, target: dev, args: { APP: "@chat/image-upload-backend" } }
+    ports: ["3006:3006"]
+    environment:
+      <<: *backend-env
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/image_upload
+    volumes: [./apps/image-upload-backend:/repo/apps/image-upload-backend, /repo/apps/image-upload-backend/node_modules]
+    depends_on:
+      postgres: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      auth: { condition: service_started }
+
+  ai-summary-backend:
+    <<: *app
+    build: { context: ., dockerfile: docker/backend/Dockerfile, target: dev, args: { APP: "@chat/ai-summary-backend" } }
+    ports: ["3008:3008"]
+    environment:
+      <<: *backend-env
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/ai_summary
+    volumes: [./apps/ai-summary-backend:/repo/apps/ai-summary-backend, /repo/apps/ai-summary-backend/node_modules]
+    depends_on:
+      postgres: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      ollama: { condition: service_healthy }
+      auth: { condition: service_started }
+
+  chatbot-backend:
+    <<: *app
+    build: { context: ., dockerfile: docker/backend/Dockerfile, target: dev, args: { APP: "@chat/chatbot-backend" } }
+    ports: ["3010:3010"]
+    environment:
+      <<: *backend-env
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/chatbot
+    volumes: [./apps/chatbot-backend:/repo/apps/chatbot-backend, /repo/apps/chatbot-backend/node_modules]
+    depends_on:
+      postgres: { condition: service_healthy }
+      ollama: { condition: service_healthy }
+      auth: { condition: service_started }
+
+  # Frontends (Vite dev servers; /api goes to their backend, /auth-api to auth)
+
+  home:
+    <<: *app
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/home" } }
+    ports: ["3000:3000"]
+    environment:
+      AUTH_PROXY_TARGET: http://auth:3001
+      # File events don't reach containers on macOS; poll so Vite reloads on edits
+      CHOKIDAR_USEPOLLING: "true"
+    volumes: [./apps/home:/repo/apps/home, /repo/apps/home/node_modules]
+    depends_on: [auth]
+
+  chat-app-frontend:
+    <<: *app
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/chat-app-frontend" } }
+    ports: ["3003:3003"]
+    environment:
+      API_PROXY_TARGET: http://chat-app-backend:3002
+      AUTH_PROXY_TARGET: http://auth:3001
+      # File events don't reach containers on macOS; poll so Vite reloads on edits
+      CHOKIDAR_USEPOLLING: "true"
+    volumes: [./apps/chat-app-frontend:/repo/apps/chat-app-frontend, /repo/apps/chat-app-frontend/node_modules]
+    depends_on: [auth]
+
+  link-shortener-frontend:
+    <<: *app
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/link-shortener-frontend" } }
+    ports: ["3004:3004"]
+    environment:
+      API_PROXY_TARGET: http://link-shortener-backend:3012
+      AUTH_PROXY_TARGET: http://auth:3001
+      # File events don't reach containers on macOS; poll so Vite reloads on edits
+      CHOKIDAR_USEPOLLING: "true"
+    volumes: [./apps/link-shortener-frontend:/repo/apps/link-shortener-frontend, /repo/apps/link-shortener-frontend/node_modules]
+    depends_on: [auth]
+
+  image-upload-frontend:
+    <<: *app
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/image-upload-frontend" } }
+    ports: ["3005:3005"]
+    environment:
+      API_PROXY_TARGET: http://image-upload-backend:3006
+      AUTH_PROXY_TARGET: http://auth:3001
+      # File events don't reach containers on macOS; poll so Vite reloads on edits
+      CHOKIDAR_USEPOLLING: "true"
+    volumes: [./apps/image-upload-frontend:/repo/apps/image-upload-frontend, /repo/apps/image-upload-frontend/node_modules]
+    depends_on: [auth]
+
+  ai-summary-frontend:
+    <<: *app
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/ai-summary-frontend" } }
+    ports: ["3007:3007"]
+    environment:
+      API_PROXY_TARGET: http://ai-summary-backend:3008
+      AUTH_PROXY_TARGET: http://auth:3001
+      # File events don't reach containers on macOS; poll so Vite reloads on edits
+      CHOKIDAR_USEPOLLING: "true"
+    volumes: [./apps/ai-summary-frontend:/repo/apps/ai-summary-frontend, /repo/apps/ai-summary-frontend/node_modules]
+    depends_on: [auth]
+
+  chatbot-frontend:
+    <<: *app
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/chatbot-frontend" } }
+    ports: ["3009:3009"]
+    environment:
+      API_PROXY_TARGET: http://chatbot-backend:3010
+      AUTH_PROXY_TARGET: http://auth:3001
+      # File events don't reach containers on macOS; poll so Vite reloads on edits
+      CHOKIDAR_USEPOLLING: "true"
+    volumes: [./apps/chatbot-frontend:/repo/apps/chatbot-frontend, /repo/apps/chatbot-frontend/node_modules]
+    depends_on: [auth]
+
+volumes:
+  mongo_data:
+  postgres_data:
+  redis_data:
+  minio_data:
+  ollama_data:
+  my_ui_dist:
+  frontend_common_dist:
+  ports_dist:
+  backend_common_dist:

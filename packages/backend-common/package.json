@@ -1,0 +1,48 @@
+{
+  "name": "backend-common",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "prettier": "prettier-config",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "*",
+    "bullmq": "*",
+    "jose": "*",
+    "multer": "*",
+    "helmet": "*"
+  },
+  "devDependencies": {
+    "eslint-config": "workspace:*",
+    "prettier-config": "workspace:*",
+    "tsconfig": "workspace:*",
+    "@types/multer": "*",
+    "tsup": "*",
+    "typescript": "*",
+    "@nestjs/common": "*",
+    "@nestjs/core": "*",
+    "@nestjs/swagger": "*",
+    "@types/node": "*"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/core": "*",
+    "@nestjs/swagger": "*"
+  }
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.log
+
+.turbo/
+.claude
+CLAUDE.md
+.DS_Store
+
+.venv

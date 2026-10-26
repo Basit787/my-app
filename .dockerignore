@@ -1,0 +1,17 @@
+# Both images (docker/backend, docker/frontend) build from the repo root, so this one file covers them
+**/node_modules
+**/dist
+**/.turbo
+**/.tanstack
+**/coverage
+**/*.tsbuildinfo
+**/*.log
+**/.DS_Store
+**/.env
+**/.env.*.local
+.git
+# Not needed inside any image
+.github
+.claude
+docs
+kubernetes

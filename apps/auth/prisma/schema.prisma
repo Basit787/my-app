@@ -1,0 +1,30 @@
+// prisma-client-js writes the client into this app's node_modules (no generated folder in the source tree)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-app/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  user
+  admin
+}
+
+// A user account; `name` is the username every app shows
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique @db.VarChar(64)
+  email        String   @unique @db.VarChar(255)
+  // scrypt hash (src/auth/utils/hash-password.ts); never the password itself
+  passwordHash String   @map("password_hash")
+  role         Role     @default(user)
+  // MinIO key of the profile photo; null when there is none
+  avatarKey    String?  @map("avatar_key")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("users")
+}

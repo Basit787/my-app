@@ -1,0 +1,53 @@
+{
+  "name": "frontend-common",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "prettier": "prettier-config",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "my-ui": "workspace:*",
+    "ports": "workspace:*",
+    "axios": "*",
+    "date-fns": "*"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "*",
+    "lucide-react": "*",
+    "react": "*",
+    "react-dom": "*"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "*",
+    "eslint-config": "workspace:*",
+    "prettier-config": "workspace:*",
+    "tsconfig": "workspace:*",
+    "@types/node": "*",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "lucide-react": "*",
+    "react": "*",
+    "react-dom": "*",
+    "tsup": "*",
+    "typescript": "*"
+  }
+}

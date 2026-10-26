@@ -1,0 +1,15 @@
+export {
+  GENERAL_ROOM,
+  dmRoomName,
+  legacyDmRoomName,
+  normalizeDmRoom,
+  dmRoomAliases,
+  roomsForConversation,
+  messageMatchesConversation,
+  parseDmRoom,
+  isGroupRoom,
+  conversationToRoom,
+  dmPeerFromRoom,
+  roomToConversationId,
+  isDmConversation,
+} from "frontend-common";

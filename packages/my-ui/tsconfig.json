@@ -1,0 +1,17 @@
+{
+  "extends": "tsconfig/react-app.json",
+  "compilerOptions": {
+    "paths": {
+      "my-ui": ["./src/index.ts"],
+      "my-ui/ui": ["./src/ui"],
+      "my-ui/ui/*": ["./src/ui/*"],
+      "my-ui/lib": ["./src/lib"],
+      "my-ui/lib/*": ["./src/lib/*"],
+      "my-ui/hooks": ["./src/hooks"],
+      "my-ui/hooks/*": ["./src/hooks/*"],
+      "my-ui/components": ["./src/components"],
+      "my-ui/components/*": ["./src/components/*"]
+    }
+  },
+  "include": ["src"]
+}

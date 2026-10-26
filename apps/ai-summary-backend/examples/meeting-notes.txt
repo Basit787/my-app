@@ -1,0 +1,38 @@
+Product Team Weekly Sync - Meeting Notes
+Date: Tuesday, 14 October
+Attendees: Priya (Product), Daniel (Engineering), Mei (Design), Omar (QA), Sara (Customer Success)
+
+1. Release status
+
+Daniel reported that version 2.4 is feature-complete. Two blocking bugs remain: the export to CSV fails for reports with more than 10,000 rows, and the dark mode toggle does not persist after logging out. Both have owners and fixes are expected by Thursday. Omar confirmed regression testing will start Friday morning and needs two full days. The team agreed to move the release date from Monday 20 October to Wednesday 22 October to keep the testing window intact.
+
+2. Customer feedback
+
+Sara shared the top three requests from support tickets this month:
+- Bulk editing of tasks (mentioned in 41 tickets)
+- Better search inside attachments (27 tickets)
+- A mobile view for the analytics dashboard (19 tickets)
+Sara noted that two enterprise customers have said bulk editing is a condition for renewing their contracts in Q1. Priya said this moves bulk editing to the top of the next quarter's roadmap.
+
+3. Design review: new onboarding flow
+
+Mei presented the redesigned onboarding flow. It reduces the number of setup steps from seven to four and adds an optional sample project so new users can explore features before importing their own data. Early usability tests with eight participants showed the average setup time dropped from 11 minutes to 5 minutes. Daniel raised a concern that the sample project would need to be maintained whenever features change. The team agreed to generate the sample project from a template file that lives in the main repository so it is updated with each release.
+
+4. Hiring
+
+Priya confirmed the budget for one additional backend engineer was approved. Daniel will finalise the job description by the end of the week. Interviews should start in early November.
+
+Decisions
+- Release 2.4 moves to Wednesday 22 October.
+- Bulk editing is the top priority for next quarter.
+- The new onboarding flow is approved, with the sample project generated from a template.
+
+Action items
+- Daniel: fix the CSV export and dark mode bugs by Thursday.
+- Omar: run regression tests on Friday and Monday, report results Tuesday.
+- Mei: hand off final onboarding designs to engineering by next Wednesday.
+- Sara: tell the two enterprise customers that bulk editing is planned for Q1.
+- Priya: draft the Q1 roadmap including bulk editing and attachment search.
+- Daniel: publish the backend engineer job description by Friday.
+
+Next meeting: Tuesday, 21 October.

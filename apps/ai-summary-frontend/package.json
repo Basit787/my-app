@@ -1,0 +1,45 @@
+{
+  "name": "@chat/ai-summary-frontend",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite preview --host 0.0.0.0 --port 80",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run typecheck && pnpm run lint && pnpm run format:check"
+  },
+  "dependencies": {
+    "@tanstack/react-devtools": "*",
+    "@tanstack/react-query": "*",
+    "@tanstack/react-router": "*",
+    "@tanstack/react-router-devtools": "*",
+    "frontend-common": "workspace:*",
+    "lucide-react": "*",
+    "my-ui": "workspace:*",
+    "react": "*",
+    "react-dom": "*"
+  },
+  "devDependencies": {
+    "eslint-config": "workspace:*",
+    "ports": "workspace:*",
+    "prettier-config": "workspace:*",
+    "tsconfig": "workspace:*",
+    "vite-config": "workspace:*",
+    "@types/node": "*",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "tailwindcss": "*",
+    "typescript": "*",
+    "vite": "*"
+  },
+  "prettier": "prettier-config"
+}

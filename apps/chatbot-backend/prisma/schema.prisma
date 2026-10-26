@@ -1,0 +1,21 @@
+// prisma-client-js writes the client into this app's node_modules (no generated folder in the source tree)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-app/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// One chat thread; its messages are stored by the LangGraph checkpointer (schema "langgraph") under thread_id = id
+model Conversation {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String   @default("New chat")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, updatedAt])
+  @@map("conversations")
+}

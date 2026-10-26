@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ChatWave">
+  <rect width="32" height="32" rx="8" fill="#14b8a6"/>
+  <path
+    fill="#ffffff"
+    d="M8.5 10.25c0-2.07 1.68-3.75 3.75-3.75h7.5c2.07 0 3.75 1.68 3.75 3.75v5.25c0 2.07-1.68 3.75-3.75 3.75h-4.1l-3.65 3.65v-3.65h-.35c-2.07 0-3.75-1.68-3.75-3.75v-5.25Z"
+  />
+  <circle cx="12.75" cy="13.75" r="1.15" fill="#14b8a6"/>
+  <circle cx="16" cy="13.75" r="1.15" fill="#14b8a6"/>
+  <circle cx="19.25" cy="13.75" r="1.15" fill="#14b8a6"/>
+</svg>

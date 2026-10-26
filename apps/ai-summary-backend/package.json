@@ -1,0 +1,58 @@
+{
+  "name": "@chat/ai-summary-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "prisma generate && prisma migrate deploy && (prisma db seed || echo 'Seed skipped: register the demo users first') && nest start --watch",
+    "build": "prisma generate && nest build",
+    "start": "prisma migrate deploy && node dist/src/main.js",
+    "typecheck": "prisma generate && tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src libs --max-warnings 0",
+    "lint:fix": "eslint src libs --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
+  },
+  "dependencies": {
+    "backend-common": "workspace:*",
+    "ports": "workspace:*",
+    "@langchain/core": "*",
+    "@langchain/openai": "*",
+    "@nestjs/common": "*",
+    "@nestjs/config": "*",
+    "@nestjs/core": "*",
+    "@nestjs/platform-express": "*",
+    "@nestjs/swagger": "*",
+    "@prisma/adapter-pg": "*",
+    "@prisma/client": "*",
+    "@prisma/client-runtime-utils": "*",
+    "class-transformer": "*",
+    "class-validator": "*",
+    "ioredis": "*",
+    "reflect-metadata": "*",
+    "rxjs": "*"
+  },
+  "devDependencies": {
+    "eslint-config": "workspace:*",
+    "prettier-config": "workspace:*",
+    "tsconfig": "workspace:*",
+    "@nestjs/cli": "*",
+    "@nestjs/schematics": "*",
+    "@nestjs/testing": "*",
+    "@types/node": "*",
+    "prisma": "*",
+    "typescript": "*",
+    "vite": "*",
+    "vitest": "*"
+  },
+  "prettier": "prettier-config",
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
+  }
+}

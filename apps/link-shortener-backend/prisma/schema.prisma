@@ -1,0 +1,40 @@
+// prisma-client-js writes the client into this app's node_modules (no generated folder in the source tree)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-app/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// One short link; `slug` is the path segment after /r/
+model Link {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug       String    @unique(map: "links_slug_unique") @db.VarChar(64)
+  url        String
+  title      String?   @db.VarChar(200)
+  // Owner: the auth service's user id
+  userId     String    @map("user_id") @db.VarChar(64)
+  clickCount Int       @default(0) @map("click_count")
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  clicks     Click[]
+
+  @@index([userId], map: "links_user_id_idx")
+  @@map("links")
+}
+
+// One redirect through a link, for per-day stats
+model Click {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  linkId    String   @map("link_id") @db.Uuid
+  referrer  String?
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade, map: "clicks_link_id_links_id_fk")
+
+  @@index([linkId, createdAt], map: "clicks_link_id_created_at_idx")
+  @@map("clicks")
+}

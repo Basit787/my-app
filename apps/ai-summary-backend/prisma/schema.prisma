@@ -1,0 +1,35 @@
+// prisma-client-js writes the client into this app's node_modules (no generated folder in the source tree)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-app/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+
+  @@map("document_status")
+}
+
+// One uploaded .txt file; the text lives in MinIO under `storageKey`, the summary here
+model Document {
+  id         String         @id @default(uuid()) @db.Uuid
+  // Owner: `sub` of the auth service's access token
+  userId     String         @map("user_id") @db.VarChar(64)
+  filename   String         @db.VarChar(255)
+  storageKey String         @unique @map("storage_key") @db.VarChar(500)
+  size       Int
+  status     DocumentStatus @default(UPLOADED)
+  summary    String?
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "ix_documents_user_id")
+  @@map("documents")
+}

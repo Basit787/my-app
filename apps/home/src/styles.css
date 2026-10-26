@@ -1,0 +1,3 @@
+@import "my-ui/globals.css";
+/* Classes used by the shared auth screens */
+@source "../../../packages/frontend-common/dist";

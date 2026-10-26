@@ -1,0 +1,35 @@
+// prisma-client-js writes the client into this app's node_modules (no generated folder in the source tree)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-app/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ImageStatus {
+  scheduled
+  active
+}
+
+// Metadata of an uploaded image; the bytes live in MinIO under `storedName`
+model Image {
+  id           String      @id @default(uuid())
+  userId       String      @map("user_id")
+  originalName String      @map("original_name")
+  mimeType     String      @map("mime_type")
+  size         Int
+  storedName   String      @unique @map("stored_name")
+  // Scheduled uploads turn active at `scheduledAt` (publish-image queue)
+  status       ImageStatus @default(active)
+  scheduledAt  DateTime?   @map("scheduled_at")
+  // Set while the image is in the bin; purged after BIN_RETENTION_DAYS
+  deletedAt    DateTime?   @map("deleted_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@index([userId, createdAt])
+  @@index([deletedAt])
+  @@map("images")
+}

@@ -1,0 +1,87 @@
+Northwind Renewables - Annual Report Summary for Shareholders
+
+1. Letter from the Chief Executive
+
+This year was the most important in Northwind Renewables' fifteen-year history. We completed our largest wind farm to date, entered two new markets, and for the first time generated more electricity from our own assets than we purchased from third parties to supply our retail customers. Revenue grew 18 percent to 2.4 billion, and operating profit rose 26 percent to 410 million. At the same time, the year tested us. Supply-chain delays pushed back two solar projects, interest rates raised the cost of financing new construction, and an unusually calm summer reduced wind output across our northern sites by nearly 9 percent compared with the long-term average.
+
+Our strategy remains unchanged: build and operate clean generation, sell power directly to households and businesses, and invest in the storage and grid technology that makes renewable energy reliable around the clock. We believe the companies that win the energy transition will be those that control both generation and the customer relationship, and this year we strengthened both.
+
+I want to thank our 3,100 employees, who delivered record safety performance while working through a demanding construction programme, and our shareholders, who continued to support long-term investment even as short-term market conditions became more difficult.
+
+2. Market overview
+
+Demand for renewable electricity continued to rise in all of our markets. Corporate buyers signed a record volume of long-term power purchase agreements, driven by net-zero commitments and by the desire to protect themselves from volatile fossil-fuel prices. Household demand also grew, helped by the adoption of heat pumps and electric vehicles, which together increased average residential consumption among our customers by 6 percent.
+
+Wholesale electricity prices fell from the extreme levels of the previous two years but remained above the pre-crisis average. Lower prices reduced the revenue from the portion of our output that is sold on the spot market, but they also reduced the cost of power we buy to balance our retail portfolio. Overall, the net effect on profit was slightly positive.
+
+Policy support remained strong. Two of our core markets extended auction schemes for offshore wind, and a third introduced a capacity market that pays battery storage operators for being available during peak demand. However, permitting remains slow. On average it took 4.7 years from initial application to final approval for our onshore wind projects, and grid connection queues lengthened in every region where we operate. We continue to work with regulators and industry groups to shorten these timelines.
+
+3. Generation portfolio
+
+At year end, Northwind owned and operated 5.8 gigawatts of generation capacity, up from 4.9 gigawatts a year earlier. Wind accounts for 61 percent of capacity, solar for 27 percent, hydro for 7 percent, and battery storage for 5 percent.
+
+The flagship project of the year was the Greyhaven Offshore Wind Farm, which reached full commercial operation in September. Greyhaven has 64 turbines with a combined capacity of 960 megawatts, enough to supply roughly 900,000 homes. The project was delivered three weeks ahead of schedule and 4 percent under its final approved budget, thanks largely to favourable weather during the installation season and to a new foundation design that reduced the time needed to install each turbine.
+
+In solar, we commissioned 310 megawatts across eleven sites. Two further projects, totalling 240 megawatts, were delayed by six months because of late delivery of inverters and transformers. Both are now under construction and expected to begin operation in the second quarter of next year. To reduce this risk in the future, we have signed framework agreements with three additional equipment suppliers and now hold a strategic reserve of critical components.
+
+Our hydro plants performed in line with expectations. Rainfall was close to average, and a refurbishment programme at the Lakeside plant increased its efficiency by 3 percent.
+
+Battery storage was our fastest-growing segment. We added 180 megawatts of new storage capacity, bringing the total to 290 megawatts. Batteries earned revenue in three ways: shifting solar output from the afternoon to the evening peak, providing frequency response services to grid operators, and, from this year, receiving capacity payments. Storage revenue per megawatt was 22 percent higher than we forecast when we approved these projects.
+
+4. Operational performance
+
+Fleet availability, the share of time our assets were ready to generate, was 96.8 percent, compared with 95.9 percent last year. Improvements came mainly from predictive maintenance. We now use sensor data and machine-learning models to detect early signs of gearbox and blade wear, which allows us to schedule repairs during low-wind periods instead of waiting for failures. Unplanned turbine downtime fell by 31 percent.
+
+Total generation reached 14.2 terawatt-hours, an increase of 12 percent. This was below our internal target of 15.1 terawatt-hours, mostly because of weak wind conditions in the summer and the delayed solar projects. Adjusted for weather, generation would have exceeded the target by about 2 percent.
+
+Safety remains our first priority. The lost-time injury frequency rate fell to 0.9 per million hours worked, the lowest in our history. There were no fatalities. We nevertheless recorded two serious incidents during offshore construction, both involving the transfer of personnel between vessels and turbines. Following these incidents we introduced motion-compensated gangways on all crew transfer vessels and revised training for offshore technicians.
+
+5. Customers and retail business
+
+Our retail business supplies electricity to 1.6 million households and 42,000 businesses, an increase of 140,000 customer accounts during the year. Customer churn fell from 14 percent to 11 percent, which we attribute to simpler tariffs and to our new mobile app. The app allows customers to see their consumption in near real time, receive alerts when prices are high, and automatically schedule electric vehicle charging during cheaper hours. More than 450,000 customers now use the app every month.
+
+We launched a home battery and solar package for homeowners, which includes installation, financing and a guaranteed buy-back price for surplus electricity. Uptake exceeded expectations, with 9,800 installations in the first eight months. These systems also form part of a virtual power plant: with customer permission, we can coordinate thousands of home batteries to support the grid during peak demand, sharing the resulting revenue with customers.
+
+Customer satisfaction, measured by our net promoter score, rose from 21 to 34. Complaints to the energy ombudsman fell by 40 percent. The most common remaining complaint concerns delays in final bills when customers move house, and we are replacing the billing system responsible for these delays.
+
+6. Financial results
+
+Revenue increased 18 percent to 2.4 billion. Generation revenue grew 24 percent, driven by new capacity, while retail revenue grew 11 percent, driven by customer growth partly offset by lower retail tariffs passed on from falling wholesale prices.
+
+Operating profit rose 26 percent to 410 million, and the operating margin improved from 15.9 percent to 17.1 percent. Net profit was 236 million, up 14 percent; the smaller increase reflects higher interest costs. Our average cost of debt rose from 3.1 percent to 4.4 percent as older loans were refinanced at higher market rates.
+
+Capital expenditure totalled 1.3 billion, of which 58 percent was spent on offshore wind, 21 percent on solar, 14 percent on storage and 7 percent on grid connections, digital systems and maintenance. Net debt increased to 3.9 billion, equal to 3.6 times operating profit before depreciation, within our target range of 3 to 4 times.
+
+The board proposes a dividend of 0.62 per share, an increase of 8 percent, in line with our policy of growing the dividend steadily while retaining most cash flow for investment.
+
+7. Sustainability
+
+Our generation avoided an estimated 6.1 million tonnes of carbon dioxide emissions compared with the average fossil-fuel generation mix in our markets. Our own operational emissions, mainly from vessels, vehicles and office buildings, fell 12 percent to 38,000 tonnes. We converted 70 percent of our onshore service vehicle fleet to electric vehicles and began trials of hybrid crew transfer vessels.
+
+Biodiversity is increasingly important to our licence to operate. At Greyhaven we installed artificial reef structures around turbine foundations, and monitoring has already recorded growth in fish and shellfish populations. On solar sites we plant native wildflower meadows and allow sheep grazing, which reduces mowing costs and supports local farmers.
+
+We also published our first full report on the human rights risks in our supply chain, focusing on solar panel manufacturing. We removed two suppliers that could not demonstrate adequate traceability of polysilicon and now require independent audits from all module suppliers.
+
+8. People
+
+Our workforce grew by 420 employees, mainly in offshore operations, digital services and customer care. Employee engagement scored 78 percent in our annual survey, up from 74 percent. Women make up 31 percent of the workforce and 38 percent of senior management. We launched an apprenticeship programme for wind turbine technicians in partnership with three technical colleges, with 120 apprentices in the first intake.
+
+9. Risks
+
+The main risks to our business are: lower-than-expected wind and solar output due to weather; delays in permitting and grid connections; rising interest rates that increase the cost of new projects; supply-chain disruptions affecting key components; falling wholesale prices that reduce revenue from uncontracted output; and cyber attacks on our operational technology. We manage these risks by diversifying across technologies and regions, contracting most of our output through long-term agreements, hedging interest rates on most of our debt, holding a reserve of critical components and investing in cyber security, where spending increased by 35 percent this year.
+
+10. Outlook
+
+For next year we expect generation to grow by 15 to 20 percent as Greyhaven contributes a full year of output and the delayed solar projects come online. We plan capital expenditure of about 1.5 billion, with a growing share for battery storage and for a second offshore wind farm, Seastone, where we expect a final investment decision in the autumn. We target an operating profit of 450 to 490 million, assuming average weather conditions.
+
+Longer term, our goal is to reach 12 gigawatts of generation capacity and 2 gigawatts of storage by 2032, to supply 3 million customer accounts, and to achieve net-zero operational emissions by 2030. We believe these goals are ambitious but achievable, and that they will create lasting value for shareholders, customers and the communities in which we operate.
+
+Appendix: Governance
+
+The board met eleven times during the year. In addition to its regular reviews of strategy, budget and risk, it spent two full sessions on the Seastone offshore project and one on cyber security. Two new independent directors joined the board: a former chief information security officer of a European bank, and an engineer who led offshore wind construction programmes in Asia for more than a decade. With these appointments, eight of the eleven directors are independent and four are women.
+
+The audit committee oversaw the replacement of the retail billing system and commissioned an external review of the controls around energy trading. The review found no material weaknesses but recommended clearer limits on the volume of power that traders may buy or sell without a second approval. These limits were introduced in the fourth quarter.
+
+The remuneration committee changed the long-term incentive plan for senior executives. From next year, 30 percent of the award will depend on sustainability targets, including the share of capacity built on schedule, operational emissions and employee safety, and the remaining 70 percent on total shareholder return and return on capital employed. The chief executive's total pay for the year was 2.1 million, of which 46 percent was variable.
+
+Shareholders approved all resolutions at the annual general meeting, with an average of 97 percent of votes in favour. The lowest level of support, 88 percent, was for the remuneration report; following discussions with several large investors, the committee will publish more detail on how sustainability targets are measured.

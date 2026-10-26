@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": false,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "types": ["vitest/globals", "node"],
+    "paths": {
+      "@app/agent": ["./libs/agent/src/index.ts"],
+      "@app/agent/*": ["./libs/agent/src/*"],
+      "@app/common": ["./libs/common/src/index.ts"],
+      "@app/common/*": ["./libs/common/src/*"],
+      "@app/db": ["./libs/db/src/index.ts"],
+      "@app/db/*": ["./libs/db/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "libs/**/*.ts", "vitest.config.ts", "prisma.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}
