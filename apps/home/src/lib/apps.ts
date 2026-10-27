@@ -1,5 +1,5 @@
 import { serviceUrl } from "ports";
-import { Bot, FileText, Images, Link2, MessageCircle, type LucideIcon } from "lucide-react";
+import { Bot, FileText, Images, Link2, ReceiptText, type LucideIcon } from "lucide-react";
 
 export type AppEntry = {
   id: string;
@@ -26,13 +26,6 @@ export const APPS: AppEntry[] = [
     icon: Images,
   },
   {
-    id: "chat",
-    name: "Chat Application",
-    description: "Messages, groups, file sharing and audio/video calls.",
-    url: serviceUrl("chatApp", "frontend"),
-    icon: MessageCircle,
-  },
-  {
     id: "chatbot",
     name: "AI Chatbot",
     description: "Chat with a local AI model; your conversations are saved.",
@@ -45,5 +38,12 @@ export const APPS: AppEntry[] = [
     description: "Upload text documents and get summaries from a local AI model.",
     url: serviceUrl("aiSummary", "frontend"),
     icon: FileText,
+  },
+  {
+    id: "invoices",
+    name: "Invoices",
+    description: "Upload invoices (PDF, scans, XML) and review the data read with OCR.",
+    url: serviceUrl("invoices", "frontend"),
+    icon: ReceiptText,
   },
 ];

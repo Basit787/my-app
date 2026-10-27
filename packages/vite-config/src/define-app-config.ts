@@ -9,7 +9,7 @@ import type { AppViteConfigOptions } from "./app-vite-config-options.js";
 const LOOPBACK = "127.0.0.1";
 
 // Vite config every web app shares: React, TanStack Router, Tailwind, the /auth-api proxy and an optional /api backend
-export const defineAppConfig = ({ port, api, websocket, passthrough = [] }: AppViteConfigOptions) => {
+export const defineAppConfig = ({ port, api, passthrough = [] }: AppViteConfigOptions) => {
   const authTarget = process.env.AUTH_PROXY_TARGET || serviceUrl("auth", "backend", { hostname: LOOPBACK });
   const proxy: Record<string, ProxyOptions> = {
     // The auth service on the app's own origin, so its cookies are first-party
@@ -18,7 +18,6 @@ export const defineAppConfig = ({ port, api, websocket, passthrough = [] }: AppV
   if (api) {
     const apiTarget = process.env.API_PROXY_TARGET || serviceUrl(api, "backend", { hostname: LOOPBACK });
     proxy["/api"] = { target: apiTarget, changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, "") };
-    if (websocket) proxy["/socket.io"] = { target: apiTarget, changeOrigin: true, ws: true };
     // A "^/r/" key is a RegExp, so "/r" never catches paths such as "/robots.txt"
     for (const path of passthrough) proxy[`^${path}/`] = { target: apiTarget, changeOrigin: true };
   }
@@ -35,6 +34,8 @@ export const defineAppConfig = ({ port, api, websocket, passthrough = [] }: AppV
       // File events don't reach Docker containers reliably on macOS
       watch: { usePolling: process.env.CHOKIDAR_USEPOLLING === "true" },
       proxy,
+      // Host names nginx forwards, e.g. ".example.com" (localhost and *.localhost are always allowed)
+      allowedHosts: (process.env.ALLOWED_HOSTS ?? "").split(",").filter(Boolean),
     },
     // allowedHosts: behind an ingress the app is reached by host name (chat.example.com), not localhost
     preview: { port: 80, host: true, allowedHosts: true, proxy },

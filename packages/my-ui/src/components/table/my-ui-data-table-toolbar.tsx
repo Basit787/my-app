@@ -1,28 +1,63 @@
-import { Search, X } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import { Button } from "my-ui/ui/button";
 import { Input } from "my-ui/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "my-ui/ui/select";
 import { MyUiButton } from "../button/my-ui-button";
 import { MyUiTooltip } from "../surface/my-ui-tooltip";
-import type { MyUiBulkAction, MyUiTableAction, RunTableAction } from "./my-ui-data-table.types";
+import type { MyUiBulkAction, MyUiDataTableFilter, MyUiTableAction, RunTableAction } from "./my-ui-data-table.types";
+
+type ToolbarFilter<T> = MyUiDataTableFilter<T> & { value: string; onChange: (value: string) => void };
 
 type MyUiDataTableToolbarProps<T> = {
   search?: { value: string; placeholder: string; onChange: (value: string) => void };
   selectedRows: T[];
   multiRowActions?: MyUiBulkAction<T>[];
   tableActions?: MyUiTableAction[];
+  filters?: ToolbarFilter<T>[];
   runAction: RunTableAction<T>;
   onClearSelection: () => void;
 };
 
-// Search box on the left; bulk actions (while rows are selected) and table actions on the right
+// Search box and filters on the left; bulk actions (while rows are selected) and table actions on the right
 export function MyUiDataTableToolbar<T>({
   search,
   selectedRows,
   multiRowActions,
   tableActions,
+  filters,
   runAction,
   onClearSelection,
 }: MyUiDataTableToolbarProps<T>) {
+  const [showMore, setShowMore] = useState(false);
+  const moreCount = filters?.filter((filter) => filter.more).length ?? 0;
+  const visibleFilters = filters?.filter((filter) => showMore || !filter.more);
+
+  const renderFilter = (filter: ToolbarFilter<T>) => (
+    <MyUiTooltip key={filter.id} text={filter.tooltip}>
+      {/* The span keeps the tooltip working on a disabled dropdown */}
+      <span className="inline-flex">
+        <Select value={filter.value} onValueChange={filter.onChange} disabled={filter.disabled}>
+          <SelectTrigger
+            size="sm"
+            style={{ width: filter.width }}
+            aria-label={typeof filter.label === "string" ? filter.label : filter.id}
+          >
+            <span className="text-muted-foreground">{filter.label}:</span>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {filter.options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </span>
+    </MyUiTooltip>
+  );
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {search && (
@@ -35,6 +70,13 @@ export function MyUiDataTableToolbar<T>({
             className="pl-8"
           />
         </div>
+      )}
+      {visibleFilters?.map(renderFilter)}
+      {moreCount > 0 && (
+        <Button size="sm" variant="ghost" onClick={() => setShowMore((open) => !open)}>
+          {showMore ? <ChevronUp /> : <ChevronDown />}
+          {showMore ? "Show less" : `Show more (${moreCount})`}
+        </Button>
       )}
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {!!multiRowActions?.length && selectedRows.length > 0 && (

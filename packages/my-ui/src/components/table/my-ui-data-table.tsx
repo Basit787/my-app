@@ -37,6 +37,7 @@ export function MyUiDataTable<T>({
   singleRowActions,
   multiRowActions,
   tableActions,
+  filters,
   searchable = true,
   searchPlaceholder = "Search…",
   pageSize = 10,
@@ -50,6 +51,18 @@ export function MyUiDataTable<T>({
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize });
   const [pending, setPending] = useState<PendingConfirm | null>(null);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries((filters ?? []).map((filter) => [filter.id, filter.defaultValue ?? filter.options[0]?.value])),
+  );
+
+  // Rows that pass every filter's chosen option
+  const filteredData = useMemo(() => {
+    if (!filters?.length) return data;
+    const matchers = filters.map(
+      (filter) => filter.options.find((option) => option.value === filterValues[filter.id])?.match,
+    );
+    return data.filter((row) => matchers.every((match) => !match || match(row)));
+  }, [data, filters, filterValues]);
 
   const selectable = !!multiRowActions?.length;
   const classNames = useMemo(() => new Map(columns.map((column) => [column.id, column.className])), [columns]);
@@ -64,7 +77,7 @@ export function MyUiDataTable<T>({
   }, [columns, selectable, singleRowActions]);
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns: tableColumns.defs,
     getRowId: (row) => getRowId(row),
     state: { sorting, rowSelection, globalFilter, pagination },
@@ -110,6 +123,16 @@ export function MyUiDataTable<T>({
         selectedRows={table.getSelectedRowModel().rows.map((row) => row.original)}
         multiRowActions={multiRowActions}
         tableActions={tableActions}
+        filters={filters?.map((filter) => ({
+          ...filter,
+          value: filterValues[filter.id],
+          onChange: (value: string) => {
+            setFilterValues((current) => ({ ...current, [filter.id]: value }));
+            setPagination((current) => ({ ...current, pageIndex: 0 }));
+            // Hidden rows must not stay selected
+            table.resetRowSelection();
+          },
+        }))}
         runAction={tableColumns.runAction}
         onClearSelection={() => table.resetRowSelection()}
       />

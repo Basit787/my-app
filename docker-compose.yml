@@ -20,18 +20,9 @@ x-backend-env: &backend-env
   MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
   REDIS_URL: redis://redis:6379
   OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
-  OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:0.5b}
 
 services:
-  mongo:
-    image: mongo:7
-    restart: unless-stopped
-    ports: ["27018:27017"]
-    volumes: [mongo_data:/data/db]
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -68,21 +59,13 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
 
-  coturn:
-    image: coturn/coturn:latest
-    restart: unless-stopped
-    ports: ["3478:3478/tcp", "3478:3478/udp"]
-    command: >
-      -n --log-file=stdout --listening-port=3478 --fingerprint --lt-cred-mech --realm=realtime-chat
-      --user=${TURN_USER:-chat}:${TURN_PASSWORD:-chatpass} --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}
-
   # Serves Ollama and pulls the model on first start; healthy only once the model is present
   ollama:
     image: alpine/ollama:latest
     restart: unless-stopped
     ports: ["11434:11434"]
     environment:
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:0.5b}
       OLLAMA_KEEP_ALIVE: 30m
       OLLAMA_CONTEXT_LENGTH: "8192"
       OLLAMA_MAX_LOADED_MODELS: "1"
@@ -134,21 +117,6 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       minio: { condition: service_healthy }
-
-  chat-app-backend:
-    <<: *app
-    build: { context: ., dockerfile: docker/backend/Dockerfile, target: dev, args: { APP: "@chat/chat-app-backend" } }
-    ports: ["3002:3002"]
-    environment:
-      <<: *backend-env
-      MONGODB_URI: mongodb://mongo:27017/realtime_chat
-      TURN_USER: ${TURN_USER:-chat}
-      TURN_PASSWORD: ${TURN_PASSWORD:-chatpass}
-    volumes: [./apps/chat-app-backend:/repo/apps/chat-app-backend, /repo/apps/chat-app-backend/node_modules]
-    depends_on:
-      mongo: { condition: service_healthy }
-      minio: { condition: service_healthy }
-      coturn: { condition: service_started }
 
   link-shortener-backend:
     <<: *app
@@ -204,6 +172,30 @@ services:
       ollama: { condition: service_healthy }
       auth: { condition: service_started }
 
+  invoice-backend:
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+      target: dev
+      args:
+        APP: "@chat/invoice-backend"
+        # OCR (Tesseract + English data), PDF tools (pdftotext, pdftoppm, pdfdetach, pdftohtml) and fonts Poppler
+        # needs to draw PDFs that don't embed theirs (Liberation matches Helvetica, Times and Courier)
+        SYSTEM_PACKAGES: ${INVOICE_SYSTEM_PACKAGES:-tesseract-ocr tesseract-ocr-data-eng poppler-utils fontconfig font-liberation}
+    ports: ["3013:3013"]
+    environment:
+      <<: *backend-env
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/invoices
+      OCR_LANGUAGES: ${OCR_LANGUAGES:-eng}
+    volumes: [./apps/invoice-backend:/repo/apps/invoice-backend, /repo/apps/invoice-backend/node_modules]
+    depends_on:
+      postgres: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      ollama: { condition: service_healthy }
+      auth: { condition: service_started }
+
   # Frontends (Vite dev servers; /api goes to their backend, /auth-api to auth)
 
   home:
@@ -212,21 +204,11 @@ services:
     ports: ["3000:3000"]
     environment:
       AUTH_PROXY_TARGET: http://auth:3001
+      # Host names nginx forwards (home.<DOMAIN>); Vite rejects unknown hosts
+      ALLOWED_HOSTS: .${DOMAIN:-localhost}
       # File events don't reach containers on macOS; poll so Vite reloads on edits
       CHOKIDAR_USEPOLLING: "true"
     volumes: [./apps/home:/repo/apps/home, /repo/apps/home/node_modules]
-    depends_on: [auth]
-
-  chat-app-frontend:
-    <<: *app
-    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/chat-app-frontend" } }
-    ports: ["3003:3003"]
-    environment:
-      API_PROXY_TARGET: http://chat-app-backend:3002
-      AUTH_PROXY_TARGET: http://auth:3001
-      # File events don't reach containers on macOS; poll so Vite reloads on edits
-      CHOKIDAR_USEPOLLING: "true"
-    volumes: [./apps/chat-app-frontend:/repo/apps/chat-app-frontend, /repo/apps/chat-app-frontend/node_modules]
     depends_on: [auth]
 
   link-shortener-frontend:
@@ -236,6 +218,8 @@ services:
     environment:
       API_PROXY_TARGET: http://link-shortener-backend:3012
       AUTH_PROXY_TARGET: http://auth:3001
+      # Host names nginx forwards (home.<DOMAIN>); Vite rejects unknown hosts
+      ALLOWED_HOSTS: .${DOMAIN:-localhost}
       # File events don't reach containers on macOS; poll so Vite reloads on edits
       CHOKIDAR_USEPOLLING: "true"
     volumes: [./apps/link-shortener-frontend:/repo/apps/link-shortener-frontend, /repo/apps/link-shortener-frontend/node_modules]
@@ -248,6 +232,8 @@ services:
     environment:
       API_PROXY_TARGET: http://image-upload-backend:3006
       AUTH_PROXY_TARGET: http://auth:3001
+      # Host names nginx forwards (home.<DOMAIN>); Vite rejects unknown hosts
+      ALLOWED_HOSTS: .${DOMAIN:-localhost}
       # File events don't reach containers on macOS; poll so Vite reloads on edits
       CHOKIDAR_USEPOLLING: "true"
     volumes: [./apps/image-upload-frontend:/repo/apps/image-upload-frontend, /repo/apps/image-upload-frontend/node_modules]
@@ -260,6 +246,8 @@ services:
     environment:
       API_PROXY_TARGET: http://ai-summary-backend:3008
       AUTH_PROXY_TARGET: http://auth:3001
+      # Host names nginx forwards (home.<DOMAIN>); Vite rejects unknown hosts
+      ALLOWED_HOSTS: .${DOMAIN:-localhost}
       # File events don't reach containers on macOS; poll so Vite reloads on edits
       CHOKIDAR_USEPOLLING: "true"
     volumes: [./apps/ai-summary-frontend:/repo/apps/ai-summary-frontend, /repo/apps/ai-summary-frontend/node_modules]
@@ -272,13 +260,83 @@ services:
     environment:
       API_PROXY_TARGET: http://chatbot-backend:3010
       AUTH_PROXY_TARGET: http://auth:3001
+      # Host names nginx forwards (home.<DOMAIN>); Vite rejects unknown hosts
+      ALLOWED_HOSTS: .${DOMAIN:-localhost}
       # File events don't reach containers on macOS; poll so Vite reloads on edits
       CHOKIDAR_USEPOLLING: "true"
     volumes: [./apps/chatbot-frontend:/repo/apps/chatbot-frontend, /repo/apps/chatbot-frontend/node_modules]
     depends_on: [auth]
 
+  invoice-frontend:
+    <<: *app
+    build: { context: ., dockerfile: docker/frontend/Dockerfile, target: dev, args: { APP: "@chat/invoice-frontend" } }
+    ports: ["3014:3014"]
+    environment:
+      API_PROXY_TARGET: http://invoice-backend:3013
+      AUTH_PROXY_TARGET: http://auth:3001
+      # Host names nginx forwards (home.<DOMAIN>); Vite rejects unknown hosts
+      ALLOWED_HOSTS: .${DOMAIN:-localhost}
+      # File events don't reach containers on macOS; poll so Vite reloads on edits
+      CHOKIDAR_USEPOLLING: "true"
+    volumes: [./apps/invoice-frontend:/repo/apps/invoice-frontend, /repo/apps/invoice-frontend/node_modules]
+    depends_on: [auth]
+
+  # One entry point on 80/443: the host name picks the app (home.localhost locally, home.<DOMAIN> on a server)
+  nginx:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      # NGINX_MODE=https on a server once `make certs` has run; http (default) locally
+      - ./nginx/${NGINX_MODE:-http}:/etc/nginx/templates:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+
+  # HTTPS certificate for every app subdomain of DOMAIN; run with `make certs`
+  certbot:
+    image: certbot/certbot:latest
+    profiles: [certbot]
+    volumes: [letsencrypt:/etc/letsencrypt, certbot_www:/var/www/certbot]
+    environment:
+      DOMAIN: ${DOMAIN:-}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        if [ -z "$$DOMAIN" ] || [ "$$DOMAIN" = localhost ] || [ -z "$$CERTBOT_EMAIL" ]; then
+          echo "Set DOMAIN (a real domain, not localhost) and CERTBOT_EMAIL in ./.env; local runs need no certificate" >&2
+          exit 1
+        fi
+        set --
+        for app in home auth links links-api images images-api summary summary-api chatbot chatbot-api invoices invoices-api; do
+          set -- "$$@" -d "$$app.$$DOMAIN"
+        done
+        certbot certonly --webroot -w /var/www/certbot --cert-name "$$DOMAIN" --keep-until-expiring \
+          --non-interactive --agree-tos --no-eff-email -m "$$CERTBOT_EMAIL" "$$@"
+
+  # Self-signed certificate for local HTTPS tests (DOMAIN=localtest.me); run with `make local-certs`
+  local-certs:
+    image: alpine:3.20
+    profiles: [local-certs]
+    volumes: [letsencrypt:/etc/letsencrypt]
+    environment:
+      DOMAIN: ${DOMAIN:-localtest.me}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        apk add --no-cache openssl >/dev/null
+        mkdir -p "/etc/letsencrypt/live/$$DOMAIN"
+        cd "/etc/letsencrypt/live/$$DOMAIN"
+        openssl req -x509 -nodes -newkey rsa:2048 -days 365 -keyout privkey.pem -out fullchain.pem \
+          -subj "/CN=$$DOMAIN" -addext "subjectAltName=DNS:$$DOMAIN,DNS:*.$$DOMAIN"
+        echo "Self-signed certificate for *.$$DOMAIN"
+
 volumes:
-  mongo_data:
   postgres_data:
   redis_data:
   minio_data:
@@ -287,3 +345,5 @@ volumes:
   frontend_common_dist:
   ports_dist:
   backend_common_dist:
+  letsencrypt:
+  certbot_www:

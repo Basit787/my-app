@@ -1,0 +1,70 @@
+// prisma-client-js writes the client into this app's node_modules (no generated folder in the source tree)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-app/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum InvoiceStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+
+  @@map("invoice_status")
+}
+
+// How the fields were read: an XML invoice (exact), the PDF's text layer, or Tesseract OCR
+enum InvoiceSource {
+  XML
+  TEXT
+  OCR
+
+  @@map("invoice_source")
+}
+
+// One uploaded invoice file (PDF, XML or image); the file lives in MinIO under `storageKey`
+model Invoice {
+  id              String         @id @default(uuid()) @db.Uuid
+  // Owner: `sub` of the auth service's access token
+  userId          String         @map("user_id") @db.VarChar(64)
+  filename        String         @db.VarChar(255)
+  storageKey      String         @unique @map("storage_key") @db.VarChar(500)
+  contentType     String         @map("content_type") @db.VarChar(100)
+  size            Int
+  status          InvoiceStatus  @default(UPLOADED)
+  source          InvoiceSource?
+  pageCount       Int?           @map("page_count")
+  extractedText   String?        @map("extracted_text")
+  // Why the last extraction failed
+  error           String?
+  invoiceNumber   String?        @map("invoice_number") @db.VarChar(100)
+  // YYYY-MM-DD
+  invoiceDate     String?        @map("invoice_date") @db.VarChar(10)
+  dueDate         String?        @map("due_date") @db.VarChar(10)
+  vendorName      String?        @map("vendor_name") @db.VarChar(255)
+  vendorAddress   String?        @map("vendor_address") @db.VarChar(500)
+  vendorTaxId     String?        @map("vendor_tax_id") @db.VarChar(100)
+  customerName    String?        @map("customer_name") @db.VarChar(255)
+  customerAddress String?        @map("customer_address") @db.VarChar(500)
+  // ISO 4217, e.g. USD
+  currency        String?        @db.VarChar(3)
+  subtotal        Decimal?       @db.Decimal(14, 2)
+  taxAmount       Decimal?       @map("tax_amount") @db.Decimal(14, 2)
+  totalAmount     Decimal?       @map("total_amount") @db.Decimal(14, 2)
+  // [{ description, quantity, unitPrice, amount }]
+  lineItems       Json           @default("[]") @map("line_items")
+  notes           String?
+  // The fields as first read from the file, to find the old values on the original when edits are applied
+  extractedFields Json?          @map("extracted_fields")
+  // Set when the user archives the invoice; the file and data are kept
+  archivedAt      DateTime?      @map("archived_at") @db.Timestamptz(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "ix_invoices_user_id")
+  @@map("invoices")
+}

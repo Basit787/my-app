@@ -52,8 +52,6 @@ jobs:
       matrix:
         app:
           - auth
-          - chat-app-backend
-          - chat-app-frontend
           - home
           - link-shortener-backend
           - link-shortener-frontend

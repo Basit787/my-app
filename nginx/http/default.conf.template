@@ -1,0 +1,10 @@
+include /etc/nginx/snippets/apps.conf;
+
+# Local (default): plain HTTP on port 80, e.g. http://home.localhost, http://invoices.localhost
+server {
+  listen 80 default_server;
+  server_name _;
+  # certbot's challenge, so `make certs` works before HTTPS is on
+  location /.well-known/acme-challenge/ { root /var/www/certbot; }
+  include /etc/nginx/snippets/proxy.conf;
+}

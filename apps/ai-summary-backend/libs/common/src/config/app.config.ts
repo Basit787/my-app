@@ -22,7 +22,7 @@ export const appConfig = registerAs("app", () => ({
   // Local model served by Ollama through its OpenAI-compatible API
   ollama: {
     url: process.env.OLLAMA_URL || "http://localhost:11434",
-    model: process.env.OLLAMA_MODEL || "qwen2.5:1.5b",
+    model: process.env.OLLAMA_MODEL || "qwen2.5:0.5b",
   },
 }));
 

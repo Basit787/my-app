@@ -1,7 +1,7 @@
 # One image definition for every web frontend in apps/ (React + Vite). Pick the app with the APP build arg
 # (its package name) and the stage with `target`: `dev` (watch mode, used by docker-compose.yml) or `prod`. Build context: repo root.
 #
-#   docker build -f docker/frontend/Dockerfile --build-arg APP=@chat/chat-app-frontend --target prod .
+#   docker build -f docker/frontend/Dockerfile --build-arg APP=@chat/home --target prod .
 #
 # Each app defines how it runs through its own package.json scripts: `dev`, `build` and `start`.
 ARG NODE_IMAGE=node:20-alpine

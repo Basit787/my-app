@@ -56,6 +56,22 @@ export type MyUiTableAction = {
   tooltip?: ReactNode;
 };
 
+// A dropdown in the toolbar; the chosen option keeps only the rows it matches (no `match`: every row)
+export type MyUiDataTableFilter<T> = {
+  id: string;
+  label: ReactNode;
+  options: { value: string; label: ReactNode; match?: (row: T) => boolean }[];
+  // Option chosen at first; defaults to the first option
+  defaultValue?: string;
+  // CSS width of the dropdown, e.g. 180 or "12rem"
+  width?: number | string;
+  // Shown on hover, also while disabled
+  tooltip?: ReactNode;
+  disabled?: boolean;
+  // Hidden behind the "Show more" button until it is opened
+  more?: boolean;
+};
+
 export type MyUiDataTableProps<T> = {
   data: T[];
   columns: MyUiDataTableColumn<T>[];
@@ -64,6 +80,7 @@ export type MyUiDataTableProps<T> = {
   // Adds a checkbox column
   multiRowActions?: MyUiBulkAction<T>[];
   tableActions?: MyUiTableAction[];
+  filters?: MyUiDataTableFilter<T>[];
   searchable?: boolean;
   searchPlaceholder?: string;
   pageSize?: number;
