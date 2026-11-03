@@ -9,5 +9,5 @@ const packageJson = JSON.parse(readFileSync(new URL("./package.json", import.met
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: { path: "prisma/migrations", seed: packageJson.prisma.seed },
-  datasource: { url: process.env.DATABASE_URL || "postgres://postgres:postgres@127.0.0.1:5433/chatbot" },
+  datasource: { url: process.env.DATABASE_URL   },
 });

@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
+import { Globe } from "lucide-react";
 import { MyUiMessage, MyUiSpinner } from "my-ui";
 import type { ChatMessage } from "@/features/chat/api/api";
 import { useChatStreamStore } from "@/features/chat/store/chat-stream-store";
 import { MarkdownContent } from "./markdown-content";
+import { SourceList } from "./source-list";
 
 type MessageListProps = {
   messages: ChatMessage[];
@@ -22,9 +24,10 @@ const typingDots = (
   </div>
 );
 
-// The user's messages on the right in the primary color; replies on the left in a muted bubble, rendered as Markdown
 export const MessageList = ({ messages, loading }: MessageListProps) => {
   const streamingText = useChatStreamStore((state) => state.streamingText);
+  const streamingSources = useChatStreamStore((state) => state.streamingSources);
+  const streamingStatus = useChatStreamStore((state) => state.streamingStatus);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Follow the conversation as messages and streamed text arrive
@@ -44,12 +47,20 @@ export const MessageList = ({ messages, loading }: MessageListProps) => {
         ) : (
           <MyUiMessage key={message.id} variant="muted">
             <MarkdownContent content={message.content} />
+            <SourceList sources={message.sources ?? []} />
           </MyUiMessage>
         ),
       )}
       {streamingText !== null && (
         <MyUiMessage variant="muted">
+          {streamingStatus && !streamingText && (
+            <p className="mb-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Globe className="size-3.5" />
+              {streamingStatus}
+            </p>
+          )}
           {streamingText ? <MarkdownContent content={streamingText} /> : typingDots}
+          <SourceList sources={streamingSources} />
         </MyUiMessage>
       )}
       <div ref={bottomRef} />

@@ -14,7 +14,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
   setupSwagger(app, {
     title: "Image Upload API",
-    description: "Images per user in MinIO, with scheduled publishing and a bin.",
+    description: "Images per user in S3, with scheduled publishing and a bin.",
   });
 
   await app.listen(config.port);

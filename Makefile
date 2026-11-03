@@ -1,42 +1,43 @@
-.PHONY: up build down logs ps rebuild install clean certs local-certs
+.PHONY: up build down rebuild prod prod-down full full-down install clean
 .DEFAULT_GOAL := up
 
-# Builds the images and runs everything in containers: shared services, every backend and frontend (home: localhost:3000)
-up:
-	docker compose up -d --build --remove-orphans
+DEV = docker compose -f docker-compose.dev.yml
+PROD = docker compose -f docker-compose.prod.yml
+FULL = docker compose -f docker-compose.full.yml
 
-# Builds every image without starting containers
-build:
-	docker compose build
+up: .env
+	$(DEV) up -d --build --remove-orphans
+	@echo "Open http://localhost:3000"
 
-# Stops every container; data volumes stay
+build: .env
+	$(DEV) build
+
 down:
-	docker compose down
+	$(DEV) down
 
-logs:
-	docker compose logs -f
+rebuild: .env
+	$(DEV) build --no-cache
+	$(DEV) up -d --remove-orphans --renew-anon-volumes
 
-ps:
-	docker compose ps
+prod: .env
+	$(PROD) up -d --build --remove-orphans
 
-# After dependency changes: the images bake node_modules in
-rebuild:
-	docker compose build --no-cache
-	docker compose up -d --remove-orphans
+prod-down:
+	$(PROD) down
 
-# Server: HTTPS certificate for DOMAIN's app subdomains (DOMAIN, CERTBOT_EMAIL in ./.env), then reload nginx
-certs:
-	docker compose run --rm certbot
-	docker compose exec nginx nginx -s reload
+full:
+	$(FULL) up -d --build --remove-orphans
+	@echo "Open http://localhost:3000"
 
-# Local HTTPS tests: self-signed certificate for *.$DOMAIN, e.g. localtest.me (browser warns once per subdomain)
-local-certs:
-	docker compose run --rm local-certs
+full-down:
+	$(FULL) down
+
+.env:
+	cp .env.example .env
 
 install:
 	pnpm install && pnpm build
 
-# Everything installs and builds regenerate (run `make install` after)
 clean:
 	find . -type d \( -name node_modules -o -name dist -o -name .turbo -o -name .tanstack \) -prune -exec rm -rf {} +
 	find . -name "*.tsbuildinfo" -delete

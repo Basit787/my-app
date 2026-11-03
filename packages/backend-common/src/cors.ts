@@ -25,7 +25,7 @@ export const isAllowedOrigin = (config: OriginConfig, origin: string): boolean =
   config.corsOrigin.includes(origin) ||
   (config.allowLanOrigins && isPrivateNetworkOrigin(origin));
 
-// Origin callback for `cors` (HTTP and Socket.IO); requests without an Origin header are allowed
+// Origin callback for `cors`; requests without an Origin header are allowed
 export const corsOriginCallback =
   (config: OriginConfig) => (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) =>
     callback(null, !origin || isAllowedOrigin(config, origin));

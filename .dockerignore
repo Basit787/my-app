@@ -1,4 +1,3 @@
-# Both images (docker/backend, docker/frontend) build from the repo root, so this one file covers them
 **/node_modules
 **/dist
 **/.turbo
@@ -10,8 +9,5 @@
 **/.env
 **/.env.*.local
 .git
-# Not needed inside any image
-.github
 .claude
 docs
-kubernetes

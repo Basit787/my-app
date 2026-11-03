@@ -12,8 +12,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -36,7 +34,8 @@
     "class-validator": "*",
     "ioredis": "*",
     "reflect-metadata": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "prisma": "*"
   },
   "devDependencies": {
     "eslint-config": "workspace:*",
@@ -44,12 +43,8 @@
     "tsconfig": "workspace:*",
     "@nestjs/cli": "*",
     "@nestjs/schematics": "*",
-    "@nestjs/testing": "*",
     "@types/node": "*",
-    "prisma": "*",
-    "typescript": "*",
-    "vite": "*",
-    "vitest": "*"
+    "typescript": "*"
   },
   "prettier": "prettier-config",
   "prisma": {

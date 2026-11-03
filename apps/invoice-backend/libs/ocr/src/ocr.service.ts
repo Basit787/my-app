@@ -1,5 +1,6 @@
 import { appConfig, type AppConfig } from "@app/common";
 import { Inject, Injectable, Logger } from "@nestjs/common";
+import { runCommand } from "backend-common";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { ImageText } from "./types/image-text.js";
@@ -14,7 +15,6 @@ import { parseBboxHtml } from "./utils/parse-bbox-html.js";
 import { parsePdftohtml } from "./utils/parse-pdftohtml.js";
 import { parsePpm } from "./utils/parse-ppm.js";
 import { parseTesseractTsv } from "./utils/parse-tesseract-tsv.js";
-import { runCommand } from "./utils/run-command.js";
 
 // A page with fewer letters and digits than this in its text layer is treated as a scan
 const MIN_PAGE_CHARS = 40;

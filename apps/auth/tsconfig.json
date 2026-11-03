@@ -18,7 +18,7 @@
     "skipLibCheck": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "types": ["vitest/globals", "node"],
+    "types": ["node"],
     "paths": {
       "@app/common": ["./libs/common/src/index.ts"],
       "@app/common/*": ["./libs/common/src/*"],
@@ -26,6 +26,6 @@
       "@app/db/*": ["./libs/db/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "libs/**/*.ts", "test/**/*.ts", "vitest.config*.ts"],
+  "include": ["src/**/*.ts", "libs/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

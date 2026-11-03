@@ -38,7 +38,8 @@
     "pdfkit": "*",
     "pngjs": "*",
     "reflect-metadata": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "prisma": "*"
   },
   "devDependencies": {
     "eslint-config": "workspace:*",
@@ -49,7 +50,6 @@
     "@types/node": "*",
     "@types/pdfkit": "*",
     "@types/pngjs": "*",
-    "prisma": "*",
     "typescript": "*"
   },
   "prettier": "prettier-config"

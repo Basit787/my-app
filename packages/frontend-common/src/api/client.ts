@@ -212,5 +212,3 @@ export const createApiClient = ({
     getWithMeta,
   };
 };
-
-export type ApiClient = ReturnType<typeof createApiClient>;

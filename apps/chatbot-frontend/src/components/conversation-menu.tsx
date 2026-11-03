@@ -34,7 +34,7 @@ export const ConversationMenu = ({ conversation, onDeleted }: ConversationMenuPr
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Delete chat?"
-        description={`"${conversation.title}" and all its messages will be deleted.`}
+        description={`"${conversation.title}" with all its messages and documents will be deleted.`}
         confirmText="Delete"
         destructive
         onConfirm={() => remove.mutate(conversation.id, { onSuccess: onDeleted })}

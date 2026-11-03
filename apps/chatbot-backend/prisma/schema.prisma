@@ -10,12 +10,28 @@ datasource db {
 
 // One chat thread; its messages are stored by the LangGraph checkpointer (schema "langgraph") under thread_id = id
 model Conversation {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  title     String   @default("New chat")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String     @id @default(uuid())
+  userId    String     @map("user_id")
+  title     String     @default("New chat")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  documents Document[]
 
   @@index([userId, updatedAt])
   @@map("conversations")
+}
+
+model Document {
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  fileName       String       @map("file_name")
+  contentType    String       @map("content_type")
+  size           Int
+  objectKey      String       @map("object_key")
+  chunkCount     Int          @map("chunk_count")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([conversationId])
+  @@map("documents")
 }

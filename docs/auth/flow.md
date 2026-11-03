@@ -1,21 +1,21 @@
 # Auth service — flows
 
-## Sign-in and first token
+## Sign-in
 
 ```mermaid
 sequenceDiagram
     participant UI as Any web app
-    participant P as App proxy /auth-api
+    participant P as Vite proxy /auth-api
     participant Auth as Auth service
-    participant DB as MongoDB
-    UI->>P: POST /auth-api/auth/sign-in/email
-    P->>Auth: /api/auth/sign-in/email
-    Auth->>DB: check credentials, create session
-    Auth-->>UI: session cookie
-    UI->>Auth: POST /api/token (cookie)
-    Auth->>DB: start the refresh-token chain
-    Auth-->>UI: accessToken + refresh cookie
+    participant DB as PostgreSQL
+    UI->>P: POST /auth-api/auth/login { email, password }
+    P->>Auth: POST /api/auth/login
+    Auth->>DB: find the user, verify the scrypt hash
+    Auth-->>UI: { user, token, expiresAt }
+    UI->>UI: save token in the access_token cookie
 ```
+
+Register is the same call on `/auth/register`, after checking that the email and name are free.
 
 ## Calling another API
 
@@ -23,15 +23,14 @@ sequenceDiagram
 sequenceDiagram
     participant UI as Web app
     participant API as App backend
-    participant Auth as Auth service
-    UI->>API: request with Authorization: Bearer <accessToken>
-    API->>Auth: GET /.well-known/jwks.json (cached)
-    API->>API: verify signature, issuer, audience, expiry
+    UI->>API: request with Authorization: Bearer <token>
+    API->>API: AuthGuard: verify HS256 signature (JWT_SECRET) and expiry
     API-->>UI: data, or 401 { error }
 ```
 
-## Renewal and sign-out
+## Restoring and ending a session
 
-1. Before the access token expires the client calls `POST /api/token`; the refresh cookie is rotated (a just-replaced token stays valid briefly for parallel tabs).
-2. A missing or reused refresh token ends the session and clears both cookies (401).
-3. `POST /api/logout` deletes the refresh token and the session and clears the cookies.
+1. On load, `AuthGate` reads the `access_token` cookie and calls `GET /api/auth/me`; a 401 (expired token or deleted account) clears the cookie and shows `LoginScreen`.
+2. A 401 from any app's API (`createAppApiClient`) signs out the same way, so an expired token leads back to the login screen.
+3. Sign-out deletes the cookie; there is no server-side session to end, the token simply expires.
+4. Deleting the account (`DELETE /api/account` with the password) removes the user and the photo, then signs out.

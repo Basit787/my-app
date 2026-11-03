@@ -1,4 +1,5 @@
-import { localAppOrigins, PORTS } from "ports";
+import { localAppOrigins } from "backend-common";
+import { PORTS } from "ports";
 import { registerAs, type ConfigType } from "@nestjs/config";
 
 // Read once at startup; inject with @Inject(appConfig.KEY) for a typed AppConfig

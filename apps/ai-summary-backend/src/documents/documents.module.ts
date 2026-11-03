@@ -2,10 +2,8 @@ import { appConfig, type AppConfig } from "@app/common";
 import { Module } from "@nestjs/common";
 import { MulterModule } from "@nestjs/platform-express";
 import { createUploadOptions } from "backend-common";
-import { DocumentEventsService } from "./document-events.service.js";
 import { DocumentsController } from "./documents.controller.js";
 import { DocumentsService } from "./documents.service.js";
-import { SummarizerService } from "./summarizer.service.js";
 
 @Module({
   imports: [
@@ -16,7 +14,7 @@ import { SummarizerService } from "./summarizer.service.js";
     }),
   ],
   controllers: [DocumentsController],
-  providers: [DocumentsService, DocumentEventsService, SummarizerService],
-  exports: [SummarizerService],
+  providers: [DocumentsService],
+  exports: [DocumentsService],
 })
 export class DocumentsModule {}

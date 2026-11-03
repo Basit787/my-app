@@ -1,5 +1,6 @@
-import { ChatGraphService } from "@app/agent";
+import { ChatGraphService, isVisibleMessage, type Source } from "@app/agent";
 import { ConversationRepository, type Conversation } from "@app/db";
+import { ObjectStorageService } from "@app/storage";
 import { Injectable, Logger } from "@nestjs/common";
 import { PassThrough } from "node:stream";
 import type { ConversationDetailDto } from "./dto/conversation-detail.dto.js";
@@ -11,7 +12,6 @@ import { toConversationDto } from "./utils/to-conversation-dto.js";
 
 const DEFAULT_TITLE = "New chat";
 
-// Conversations (Prisma) plus their messages (LangGraph thread with the same id); null means not found for this user
 @Injectable()
 export class ConversationsService {
   private readonly logger = new Logger(ConversationsService.name);
@@ -19,6 +19,7 @@ export class ConversationsService {
   constructor(
     private readonly conversations: ConversationRepository,
     private readonly chatGraph: ChatGraphService,
+    private readonly storage: ObjectStorageService,
   ) {}
 
   async list(userId: string): Promise<ConversationDto[]> {
@@ -34,7 +35,10 @@ export class ConversationsService {
     const conversation = await this.conversations.findForUser(id, userId);
     if (!conversation) return null;
     const messages = await this.chatGraph.getMessages(id);
-    return { conversation: toConversationDto(conversation), messages: messages.map(toChatMessageDto) };
+    const visible = messages.flatMap((message, index) =>
+      isVisibleMessage(message) ? [toChatMessageDto(message, index)] : [],
+    );
+    return { conversation: toConversationDto(conversation), messages: visible };
   }
 
   async rename(id: string, userId: string, title: string): Promise<ConversationDto | null> {
@@ -46,6 +50,8 @@ export class ConversationsService {
   async remove(id: string, userId: string): Promise<boolean> {
     const conversation = await this.conversations.findForUser(id, userId);
     if (!conversation) return false;
+    await this.chatGraph.deleteConversationChunks(id);
+    await this.storage.bucket.deleteByPrefix(`documents/${id}/`);
     await this.chatGraph.deleteThread(id);
     await this.conversations.delete(id);
     return true;
@@ -67,6 +73,7 @@ export class ConversationsService {
     const stop = new AbortController();
     output.on("close", () => stop.abort());
     let replyText = "";
+    let sources: Source[] = [];
     try {
       // The first message names the chat; the client shows it before the reply starts
       if (conversation.title === DEFAULT_TITLE) {
@@ -75,9 +82,17 @@ export class ConversationsService {
       }
 
       this.logger.log(`Generating reply. conversation=${conversation.id} chars=${content.length}`);
-      for await (const text of this.chatGraph.streamReply(conversation.id, content, stop.signal)) {
-        replyText += text;
-        send({ type: "delta", text });
+      for await (const part of this.chatGraph.streamReply(conversation.id, content, stop.signal)) {
+        if (part.type === "sources") {
+          sources = part.sources;
+          send({ type: "sources", sources });
+        } else if (part.type === "tool") {
+          this.logger.log(`Tool called. conversation=${conversation.id} tool=${part.name} input="${part.input}"`);
+          send(part);
+        } else {
+          replyText += part.text;
+          send({ type: "delta", text: part.text });
+        }
       }
 
       const messages = await this.chatGraph.getMessages(conversation.id);
@@ -87,7 +102,7 @@ export class ConversationsService {
       this.logger.log(`Reply saved. conversation=${conversation.id} seconds=${(Date.now() - started) / 1000}`);
     } catch (error) {
       if (stop.signal.aborted) {
-        await this.savePartialReply(conversation.id, replyText);
+        await this.savePartialReply(conversation.id, replyText, sources);
         return;
       }
       // The model's own message (e.g. "model 'x' not found") is the fastest way to the cause
@@ -107,10 +122,10 @@ export class ConversationsService {
   }
 
   // Keeps what the user already saw, like ChatGPT does after Stop
-  private async savePartialReply(conversationId: string, replyText: string) {
+  private async savePartialReply(conversationId: string, replyText: string, sources: Source[]) {
     this.logger.log(`Reply stopped by the client. conversation=${conversationId} chars=${replyText.length}`);
     try {
-      if (replyText) await this.chatGraph.savePartialReply(conversationId, replyText);
+      if (replyText) await this.chatGraph.savePartialReply(conversationId, replyText, sources);
       await this.conversations.touch(conversationId);
     } catch (error) {
       this.logger.error(`Could not save the stopped reply. conversation=${conversationId}`, String(error));

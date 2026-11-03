@@ -11,14 +11,13 @@ import { AuthModule } from "./auth/auth.module.js";
     CommonModule,
     DbModule,
     JwtAuthModule,
-    ObjectStorageModule.forRoot({ inject: [appConfig.KEY], useFactory: (config: AppConfig) => config.minio }),
+    ObjectStorageModule.forRoot({ inject: [appConfig.KEY], useFactory: (config: AppConfig) => config.s3 }),
     AuthModule,
     AccountModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: ApiExceptionFilter }],
 })
 export class AppModule implements NestModule {
-  // Every HTTP request is logged with its status and duration
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(RequestLoggerMiddleware).forRoutes("*path");
   }

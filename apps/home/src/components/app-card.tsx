@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle, cn } from "my-ui";
 import type { AppEntry } from "@/lib/apps";
-import { warmApp } from "@/lib/warm-app";
 
 type AppCardProps = { app: AppEntry; layout?: "grid" | "list" };
 
@@ -26,8 +25,6 @@ export const AppCard = ({ app, layout = "grid" }: AppCardProps) => {
   return (
     <a
       href={app.url}
-      onPointerEnter={() => warmApp(app.url)}
-      onFocus={() => warmApp(app.url)}
       onClick={(event) => {
         if (!event.metaKey && !event.ctrlKey && !event.shiftKey) setOpening(true);
       }}

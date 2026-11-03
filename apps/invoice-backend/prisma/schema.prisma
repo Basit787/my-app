@@ -26,7 +26,7 @@ enum InvoiceSource {
   @@map("invoice_source")
 }
 
-// One uploaded invoice file (PDF, XML or image); the file lives in MinIO under `storageKey`
+// One uploaded invoice file (PDF, XML or image); the file lives in S3 under `storageKey`
 model Invoice {
   id              String         @id @default(uuid()) @db.Uuid
   // Owner: `sub` of the auth service's access token

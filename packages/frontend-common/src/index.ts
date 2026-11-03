@@ -1,15 +1,13 @@
-export * from "./hooks/use-media-query";
 export * from "./legal/cookie-consent";
 export * from "./legal/legal-links";
 export * from "./legal/legal-url";
 export * from "./lib/copy-to-clipboard";
-export * from "./lib/files";
 export * from "./lib/format";
+export * from "./lib/service-url";
 export * from "./auth";
 export * from "./api";
 export * from "./navigation/app-breadcrumbs";
 export * from "./navigation/app-header";
-export * from "./navigation/home-button";
 export * from "./navigation/mobile-bottom-nav";
 export * from "./navigation/profile-screen";
 export type * from "./navigation/mobile-nav-item";

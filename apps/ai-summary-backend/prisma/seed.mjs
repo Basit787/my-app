@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma-app/client";
 import { createObjectStorage } from "backend-common";
 import { randomUUID } from "node:crypto";
 
-// `prisma db seed` (pnpm db:seed): needs PostgreSQL (migrated), MinIO and the auth service (seeded first)
+// `prisma db seed` (pnpm db:seed): needs PostgreSQL (migrated), S3 and the auth service (seeded first)
 const DATABASE_URL = process.env.DATABASE_URL || "postgres://postgres:postgres@127.0.0.1:5433/ai_summary";
 // The auth service the demo users sign in on
 const AUTH_URL = process.env.AUTH_URL || "http://localhost:3001";
@@ -45,11 +45,11 @@ const SEED_DOCUMENTS = [
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
 const storage = createObjectStorage({
-  endpoint: process.env.MINIO_ENDPOINT || "http://localhost:9000",
-  accessKey: process.env.MINIO_ACCESS_KEY || "minioadmin",
-  secretKey: process.env.MINIO_SECRET_KEY || "minioadmin",
-  bucket: process.env.MINIO_BUCKET || "ai-summaries",
-  region: process.env.MINIO_REGION || "us-east-1",
+  endpoint: process.env.S3_ENDPOINT?.trim() || "",
+  accessKey: process.env.S3_ACCESS_KEY_ID || "test",
+  secretKey: process.env.S3_SECRET_ACCESS_KEY || "test",
+  bucket: process.env.S3_BUCKET || "ai-summaries",
+  region: process.env.S3_REGION || "us-east-1",
 });
 
 const seedUser = async (user) => {

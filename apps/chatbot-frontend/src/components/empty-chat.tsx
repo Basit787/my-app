@@ -18,6 +18,7 @@ export const EmptyChat = () => {
         <Bot className="size-6" />
       </div>
       <h1 className="text-2xl font-semibold">How can I help you today?</h1>
+      <p className="text-muted-foreground">Press + to add a .txt, .md or .pdf file and ask questions about it.</p>
       <div className="grid w-full gap-2 sm:grid-cols-2">
         {SUGGESTIONS.map((suggestion) => (
           <MyUiButton

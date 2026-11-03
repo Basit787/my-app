@@ -6,7 +6,7 @@ React + Vite + TanStack Router launcher on port `3000`; the landing page of the 
 
 - `src/routes/` — `__root.tsx` mounts `AppProviders` from `frontend-common`; `index.tsx` is `AuthGate` → `HomePage`; `privacy.tsx`, `terms.tsx`, `cookies.tsx` render the legal pages.
 - `src/components/` — `home-page.tsx` (grid), `app-card.tsx`, `legal-page.tsx`.
-- `src/lib/` — `apps.ts` (every app card: name, description, icon, URL from `serviceUrl`), `auth.ts`, `query-client.ts`, `warm-app.ts` (requests another app's dev server ahead of the click), legal texts.
+- `src/lib/` — `apps.ts` (every app card: name, description, icon, URL from `serviceUrl`), `auth.ts`, `query-client.ts`, legal texts.
 
 ## Dependencies
 

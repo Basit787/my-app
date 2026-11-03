@@ -3,7 +3,7 @@ import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { securityHeaders, setupSwagger } from "backend-common";
 import { AppModule } from "./app.module.js";
-import { SummarizerService } from "./documents/summarizer.service.js";
+import { DocumentsService } from "./documents/documents.service.js";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,7 +21,7 @@ async function bootstrap() {
   await app.listen(config.port);
   Logger.log(`AI summary server http://localhost:${config.port} (docs at /docs)`, "Bootstrap");
   // Documents a restart interrupted are summarized again
-  void app.get(SummarizerService).resumePending();
+  void app.get(DocumentsService).resumePending();
 }
 
 await bootstrap();

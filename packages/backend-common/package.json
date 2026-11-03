@@ -22,6 +22,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "ports": "workspace:*",
     "@aws-sdk/client-s3": "*",
     "bullmq": "*",
     "jose": "*",

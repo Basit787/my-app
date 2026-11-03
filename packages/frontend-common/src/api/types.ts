@@ -9,8 +9,6 @@ export type ApiErrorBody = {
   details?: Record<string, string[] | undefined>;
 };
 
-export type ApiSuccess<T> = T;
-
 export type ApiResponse<T> = { ok: true; data: T; status: number } | { ok: false; status: number; message: string };
 
 export type ApiMeta = Record<string, unknown>;

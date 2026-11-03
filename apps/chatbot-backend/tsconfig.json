@@ -18,16 +18,18 @@
     "skipLibCheck": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "types": ["vitest/globals", "node"],
+    "types": ["node"],
     "paths": {
       "@app/agent": ["./libs/agent/src/index.ts"],
       "@app/agent/*": ["./libs/agent/src/*"],
       "@app/common": ["./libs/common/src/index.ts"],
       "@app/common/*": ["./libs/common/src/*"],
       "@app/db": ["./libs/db/src/index.ts"],
-      "@app/db/*": ["./libs/db/src/*"]
+      "@app/db/*": ["./libs/db/src/*"],
+      "@app/storage": ["./libs/storage/src/index.ts"],
+      "@app/storage/*": ["./libs/storage/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "libs/**/*.ts", "vitest.config.ts", "prisma.config.ts"],
+  "include": ["src/**/*.ts", "libs/**/*.ts", "prisma.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

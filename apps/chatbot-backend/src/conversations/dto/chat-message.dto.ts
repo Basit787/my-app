@@ -1,4 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { SourceDto } from "./source.dto.js";
 
 export class ChatMessageDto {
   @ApiProperty()
@@ -9,4 +10,7 @@ export class ChatMessageDto {
 
   @ApiProperty()
   content!: string;
+
+  @ApiPropertyOptional({ type: [SourceDto], description: "Assistant replies: the excerpts they were based on" })
+  sources?: SourceDto[];
 }

@@ -2,12 +2,8 @@ import { appConfig, type AppConfig } from "@app/common";
 import { Module } from "@nestjs/common";
 import { MulterModule } from "@nestjs/platform-express";
 import { createUploadOptions } from "backend-common";
-import { ExtractorService } from "./extractor.service.js";
-import { InvoiceEventsService } from "./invoice-events.service.js";
 import { InvoicesController } from "./invoices.controller.js";
 import { InvoicesService } from "./invoices.service.js";
-import { OriginalEditorService } from "./original-editor.service.js";
-import { PagePreviewService } from "./page-preview.service.js";
 
 @Module({
   imports: [
@@ -18,7 +14,7 @@ import { PagePreviewService } from "./page-preview.service.js";
     }),
   ],
   controllers: [InvoicesController],
-  providers: [InvoicesService, InvoiceEventsService, ExtractorService, PagePreviewService, OriginalEditorService],
-  exports: [ExtractorService],
+  providers: [InvoicesService],
+  exports: [InvoicesService],
 })
 export class InvoicesModule {}

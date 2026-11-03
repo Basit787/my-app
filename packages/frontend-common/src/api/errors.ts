@@ -40,12 +40,6 @@ export const createApiError = (message: string, status = 0): Error & { status: n
   return err;
 };
 
-export const resolveMutationError = (error: unknown, fallback: string): string => {
-  if (error instanceof Error && error.message.trim()) return error.message;
-  if (isApiError(error)) return error.message;
-  return fallback;
-};
-
 // Message for a toast: API results, raw axios errors and plain errors
 export const getErrorMessage = (error: unknown, fallback: string) => {
   if (isApiError(error)) return error.message;

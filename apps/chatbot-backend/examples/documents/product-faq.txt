@@ -1,0 +1,25 @@
+Skylark Air Purifier S2 - Frequently asked questions
+
+What room size is the S2 made for?
+The S2 cleans rooms up to 45 square metres, changing the air about five times an hour in a 2.5 m high room.
+
+How loud is it?
+22 dB on the night setting, 38 dB on auto and 52 dB on turbo.
+
+How often do I change the filter?
+The HEPA H13 filter lasts about 12 months at 8 hours of use a day. The filter light turns orange two weeks before a change is due. Replacement filters (part number SK-F2) cost EUR 39.
+
+How much power does it use?
+Between 4 W (night) and 35 W (turbo). On auto it averages about 12 W.
+
+Does it work with an app?
+Yes. The Skylark Home app (iOS and Android) shows the air quality, sets schedules and sends a reminder when the filter is due. The S2 connects over 2.4 GHz Wi-Fi only.
+
+What is the warranty?
+Two years from the purchase date, extended to three years when the product is registered in the app within 30 days. The filter is a consumable and is not covered.
+
+How do I reset the Wi-Fi connection?
+Hold the power and mode buttons together for 5 seconds until the light blinks blue, then add the purifier again in the app.
+
+Can I return it?
+Purchases from the Skylark web shop can be returned within 30 days for a full refund, as long as the original packaging is included.

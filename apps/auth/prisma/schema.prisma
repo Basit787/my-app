@@ -21,7 +21,7 @@ model User {
   // scrypt hash (src/auth/utils/hash-password.ts); never the password itself
   passwordHash String   @map("password_hash")
   role         Role     @default(user)
-  // MinIO key of the profile photo; null when there is none
+  // S3 key of the profile photo; null when there is none
   avatarKey    String?  @map("avatar_key")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)

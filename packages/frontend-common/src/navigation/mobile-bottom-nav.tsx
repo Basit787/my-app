@@ -1,6 +1,6 @@
 import { House, UserRound } from "lucide-react";
 import { cn } from "my-ui";
-import { serviceUrl } from "ports";
+import { serviceUrl } from "../lib/service-url";
 import { useState } from "react";
 import type { MobileNavItem } from "./mobile-nav-item";
 import { ProfileScreen } from "./profile-screen";

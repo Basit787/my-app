@@ -1,161 +1,90 @@
-# Real-Time Chat Application
+# My Project
 
-**Socket.io** + **Express** + **React** with **Mongoose/MongoDB**, real-time chat, **private DMs**, **audio/video calls** (WebRTC), and **file sharing** — all via Docker.
+A pnpm + Turborepo workspace of small web apps that share one sign-in. Every backend is NestJS on PostgreSQL (Prisma), every frontend is React + Vite + TanStack Router with a shared shadcn/ui design system, and the AI features run on a local Ollama model — no paid API keys.
 
-## Start (Docker)
+## Apps
 
-```bash
-make
-```
+| App            | Frontend                                | Backend                                | What it does                                                                                                     |
+| -------------- | --------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Home           | `apps/home` — `3000`                    | —                                      | Sign-in and launcher: one card per app                                                                           |
+| Auth           | —                                       | `apps/auth` — `3001`                   | Register, log in, JWT for every API, profile photo, delete account                                               |
+| Link shortener | `apps/link-shortener-frontend` — `3004` | `apps/link-shortener-backend` — `3012` | Short links with custom slugs, expiry and 30-day click stats                                                     |
+| Image upload   | `apps/image-upload-frontend` — `3005`   | `apps/image-upload-backend` — `3006`   | Gallery with scheduled uploads (BullMQ) and a bin that purges itself                                             |
+| AI summary     | `apps/ai-summary-frontend` — `3007`     | `apps/ai-summary-backend` — `3008`     | Upload `.txt` files; summaries by the local model, status pushed over SSE                                        |
+| Chatbot        | `apps/chatbot-frontend` — `3009`        | `apps/chatbot-backend` — `3010`        | ChatGPT-style chat (LangGraph): streamed replies, answers from uploaded documents (pgvector), web search tool    |
+| Invoices       | `apps/invoice-frontend` — `3014`        | `apps/invoice-backend` — `3013`        | Upload PDF, XML or image invoices; fields read by XML parsing, text layer or OCR + the model; edit and re-export |
 
-Or:
+Shared code lives in `packages/`:
 
-```bash
-./docker/up.sh
-```
+| Package                                        | Purpose                                                                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `my-ui`                                        | shadcn/ui components (Tailwind 4) and `MyUi*` wrappers: forms, dialogs, data tables, sidebar layout, theme      |
+| `frontend-common`                              | App providers, API client, auth client + `AuthGate` / `LoginScreen` / account pages, navigation, legal pages    |
+| `backend-common`                               | JWT sign/verify, `AuthGuard`, `@Public()`, `@CurrentUser()`, error filter, validation pipe, S3, BullMQ, Swagger |
+| `ports`                                        | Every app's port and `serviceUrl()` for links between apps                                                      |
+| `vite-config`                                  | `defineAppConfig({ port, api })`: React, router plugin, Tailwind, `/api` and `/auth-api` proxies                |
+| `eslint-config`, `prettier-config`, `tsconfig` | Shared tooling presets                                                                                          |
 
-| Service | URL / Port |
-|---------|------------|
-| **UI** | http://localhost:5176 |
-| **API** (direct) | http://localhost:3004 |
-| **MongoDB** | localhost:27018 |
-| **MinIO API** | http://localhost:9000 |
-| **MinIO Console** | http://localhost:9001 (login: minioadmin / minioadmin) |
-| **TURN/STUN** (coturn) | localhost:3478 |
+## Quick start
 
-Copy `apps/server/.env.example` to `apps/server/.env` (and `apps/client/.env.example` to `apps/client/.env`) to customize secrets and TURN settings; compose reads each app's `.env` from its own folder.
-
-## Development (live reload)
-
-`make` / `./docker/up.sh` starts Docker with **hot reload** — edit `apps/client/src` or `apps/server/src` and changes apply without restarting containers.
-
-- **Client:** Vite dev server + HMR on port 5176
-- **Server:** `tsx watch` restarts on file changes
-
-## Monorepo
-
-pnpm workspaces + [Turborepo](https://turborepo.com):
-
-```text
-apps/client              React + Vite app (@chat/client)
-apps/server              Express + Socket.IO API (@chat/server)
-apps/mobile              Expo + NativeWind app (@chat/mobile)
-packages/ui              design system for both clients: src/web (@chat/ui), src/native (@chat/ui/native), src/styles (web.css → generated native.css)
-packages/frontend-common shared by web and mobile: chat types, endpoints, room naming, message/presence helpers, formatters
-packages/backend-common  shared Express helpers: errors, async handler, validation, S3/MinIO storage + uploads
-packages/eslint-config   shared ESLint presets (base / react / react-native / node)
-packages/prettier-config shared Prettier config
-packages/tsconfig        shared TypeScript presets
-docker/                  all Docker setup: the one Dockerfile (APP build arg, dev/prod targets), its .dockerignore, the stack compose files, compose.sh and up.sh
-```
-
-Each app owns its compose files and `.env` (`apps/<app>/docker-compose.{dev,prod}.yml`, `apps/<app>/.env.example`); the server's also start MongoDB, MinIO and coturn. `make` runs `docker/compose.sh`, which regenerates `docker/docker-compose.{dev,prod}.yml` to `include` every app's compose file, so a new app only needs its own.
-
-All dependency versions are declared once in the root `pnpm-workspace.yaml`: `"catalog:"` for shared ones, `"catalog:native"` for Expo / React Native ones.
-
-```bash
-npx -y pnpm@10.12.1 install                    # or `pnpm install` if pnpm is installed
-npx -y pnpm@10.12.1 turbo run build            # builds packages, then apps
-npx -y pnpm@10.12.1 turbo run typecheck lint
-```
-
-If you add npm dependencies, rebuild app images:
-
-```bash
-make rebuild
-```
-
-For a production-style build (static client, compiled server):
-
-```bash
-make prod
-```
-
-## Mobile app
-
-`apps/mobile` is an Expo development build (calls need native WebRTC, so Expo Go cannot run it).
-
-```bash
-cp apps/mobile/.env.example apps/mobile/.env   # set EXPO_PUBLIC_API_URL to your computer's LAN IP, e.g. http://192.168.1.20:3004
-pnpm --filter @chat/mobile exec expo run:ios   # or expo run:android — builds and installs the app once
-pnpm --filter @chat/mobile dev                 # afterwards: Metro with hot reload
-```
-
-Push notifications (messages and incoming calls when the app is closed) need an EAS project: run `eas init` in `apps/mobile`, and add FCM / APNs credentials with `eas credentials` for real devices.
-
-## Default admin
-
-On first startup the server seeds an admin user:
-
-- Email: `admin@chat.local`
-- Password: `Admin123!`
-
-Override with `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` in `.env`.
-
-## App flow
-
-### 1. Auth
-Register or sign in at http://localhost:5176 → bearer token stored → socket connects.
-
-### 2. General channel (`#general`)
-- Public room — all online users see the same messages.
-- Messages persist in MongoDB under room `general`.
-
-### 3. Direct messages (DM)
-- Click an online user in the sidebar (or start chatting with someone from message history).
-- Messages go to a **private room** `dm..userA..userB` (sorted usernames).
-- Only the two participants can read/send in that room.
-- Socket auto-joins the DM room when you open the conversation.
-
-### 4. Audio / video calls
-- Open a **DM** conversation (not `#general`).
-- Use phone / video buttons in the chat header.
-- Flow: invite → callee accepts → WebRTC offer/answer via Socket.io → media via P2P + coturn TURN.
-- Calls work across users regardless of which room they are viewing.
-
-### 5. File sharing
-- Attach files in any conversation (general or DM).
-- Files, profile photos, and group images are stored in **MinIO** (S3-compatible object storage).
-
-## Architecture
-
-```
-Browser (5176)
-  ├─ /api/*     → Vite proxy → server:3004
-  └─ /socket.io → Vite proxy → server:3004 (WebSocket)
-
-server:3004
-  ├─ better-auth  /auth/*
-  ├─ REST         /rooms/:room/messages, /rooms/:room/files
-  ├─ Socket.io    message, typing, presence, call:*
-  ├─ MongoDB      mongo:27017
-  └─ MinIO        minio:9000 (bucket: chat-uploads)
-
-coturn:3478       STUN/TURN for WebRTC
-minio:9000        Object storage (files, avatars, group images)
-minio:9001        MinIO web console
-```
-
-`MINIO_ENDPOINT` is **required**. Chat attachments, profile photos, and group images are stored only in MinIO (MongoDB keeps metadata and references).
-
-## WebRTC / TURN
-
-Calls use the **coturn** container. For local Docker, `TURN_HOST=localhost` works from the browser.
-
-On a remote server set in `.env`:
-
-- `TURN_EXTERNAL_IP` — your public IP
-- `TURN_HOST` — hostname browsers can reach
-
-## Local dev (without Docker)
+Requirements: Docker Desktop, Node.js 24.22.1+ (`nvm use` reads `.nvmrc`) and pnpm 10.12.1. Ollama and SearXNG run outside Docker; set `OLLAMA_URL` and `SEARXNG_URL` in the root `.env` (created from `.env.example` by `make`).
 
 ```bash
 pnpm install
-pnpm turbo run dev   # watches the packages and runs the server and client together
+make                      # builds and starts the whole stack with hot reload
 ```
 
-The server needs MongoDB and MinIO running (for example the `mongo` and `minio` services from `docker/docker-compose.dev.yml`).
+Open `http://localhost:3000`, register an account and pick an app.
 
-Client dev server: http://localhost:5176 (proxies API to port 3004).
+Each backend seeds demo data on start once these accounts exist (register them first): `admin@chat.local` / `Admin123!`, `alice@chat.local` / `Alice123!`, `bob@chat.local` / `Bob12345!`.
 
-MIT
+## Commands
+
+```bash
+make                    # dev stack (docker-compose.dev.yml), hot reload
+make prod               # prod stack (docker-compose.prod.yml), prod images
+make full               # local only: dev stack plus S3 (floci), Ollama and SearXNG (docker-compose.full.yml)
+make down               # stop
+make rebuild            # after changing dependencies (images bake node_modules in)
+make clean              # delete node_modules, dist and caches; `make install` afterwards
+docker compose -f docker-compose.dev.yml logs -f  # follow the containers
+
+pnpm turbo run typecheck lint                       # every app and package
+pnpm format                                         # Prettier everywhere
+pnpm --filter @chat/chatbot-backend db:migrate      # new Prisma migration for one backend
+```
+
+## Services and URLs
+
+| Service         | URL                                                           |
+| --------------- | ------------------------------------------------------------- |
+| Home            | `http://localhost:3000`                                       |
+| Auth API        | `http://localhost:3001` (Swagger `/docs`)                     |
+| Every other API | its port above, Swagger at `/docs`                            |
+| PostgreSQL      | `localhost:5433` (one database per app, pgvector)             |
+| Redis           | `localhost:6379` (BullMQ, pub/sub)                            |
+| Object storage  | `S3_ENDPOINT` in the root `.env` (any S3-compatible store)    |
+| Ollama          | `OLLAMA_URL` in the root `.env` (`qwen2.5:0.5b`, `nomic-embed-text`) |
+| SearXNG         | `SEARXNG_URL` in the root `.env` (chatbot web search)              |
+
+Apps on the same host share the sign-in (the token is kept in a cookie, and cookies ignore the port). Other devices on the same Wi-Fi can open `http://<your-ip>:3000`.
+
+## How it fits together
+
+```text
+Browser ── http://localhost:<port> ── the app's Vite server (proxies /auth-api and /api)
+  ├─ /auth-api/* ─► auth (3001)              register / login → JWT (HS256, JWT_SECRET)
+  ├─ /api/*      ─► the app's backend         Authorization: Bearer <JWT>, verified by backend-common
+  └─ /*          ─► the page itself
+
+Backends ─► PostgreSQL (Prisma) · Redis (BullMQ, pub/sub) · S3 at S3_ENDPOINT (files) · Ollama (local model)
+```
+
+- Every app publishes its own port; there is no gateway in front of them.
+- Every backend route needs a bearer token unless marked `@Public()`; errors are always `{ error, details? }`.
+- Background results are pushed, never polled: SSE for summaries and invoices, NDJSON streams for chat replies.
+- Dependency versions are pinned once in the root `package.json`; apps list them as `"*"`.
+
+## Documentation
+
+Everything else — architecture, flows, endpoints, data models and configuration for each app — is in [`docs/`](docs/README.md).

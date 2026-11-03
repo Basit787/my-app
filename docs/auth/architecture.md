@@ -1,23 +1,28 @@
 # Auth service — architecture
 
-NestJS service on port `3001` (global prefix `/api`, Swagger at `/api/docs`) that owns sign-in for every app. Built on better-auth with MongoDB.
+NestJS 12 service on port `3001` (global prefix `/api`, Swagger at `/docs`) that owns sign-in for every app. Users live in PostgreSQL through Prisma; profile photos in S3.
 
-## Modules
+## Layout
 
-- `src/auth` — better-auth instance (`AUTH`), passthrough `AuthController` for `/api/auth/*` (sign-in, sign-up, sessions), `AuthService`, `SessionGuard`, `@CurrentSession()`, `AdminSeeder` (creates `admin@chat.local` on start).
-- `src/session` — `GET /api/session`, `POST /api/token` (access token + refresh-token rotation), `POST /api/logout`; `SessionService` issues tokens, `RefreshTokenService` keeps hashed rotating refresh tokens in an httpOnly cookie.
-- `src/keys` — EdDSA signing key stored in Mongo `signingkeys`, published at `GET /.well-known/jwks.json` (outside `/api`).
-- `src/account` — `POST|DELETE /api/account/avatar` (MinIO `avatars/<userId>`), public `GET /api/avatars/:userId`.
-- `libs/common` — config, `StorageService`, re-exports of `ApiExceptionFilter`, `httpValidationPipe` and CORS helpers from `backend-common`; `libs/db` — repositories for keys, refresh tokens and users.
-- `AppModule` registers `ApiExceptionFilter` and `RequestLoggerMiddleware`.
-
-## Data
-
-- MongoDB: better-auth's `user`, `session`, `account`, `verification`, plus `signingkeys` and refresh tokens.
-- MinIO: profile photos.
+- `src/auth/` — `AuthController` (`POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, rate-limited to 10 requests a minute per client by `ThrottlerGuard`), `AuthService` (register, login, `me`, token signing), DTOs, `utils/` (scrypt `hashPassword` / `verifyPassword`, `toAuthUserDto`).
+- `src/account/` — `AccountController` (`POST|DELETE /api/account/avatar`, `DELETE /api/account`, public `GET /api/avatars/:userId`), `AccountService` (photo upload and removal, account deletion after a password check).
+- `libs/common` (`@app/common`) — `appConfig` and re-exports of the shared Nest pieces from `backend-common`.
+- `libs/db` (`@app/db`) — `PrismaService` and `UserRepository`; schema and migrations in `prisma/`.
+- `AppModule` imports `JwtAuthModule` (global `AuthGuard`), `ObjectStorageModule` (bucket `auth`), registers `ApiExceptionFilter` and `RequestLoggerMiddleware`.
 
 ## Tokens
 
-- Access token: EdDSA JWT with `sub`, `name`, `email`, `role`, `picture`; issuer `AUTH_PUBLIC_URL`, audience `AUTH_AUDIENCE`, 15 minutes.
-- Every API verifies it with `createAccessTokenVerifier` from `backend-common/auth` against `/.well-known/jwks.json`.
-- Sessions: a cookie through each app's `/auth-api` proxy (first-party, shared across ports on one host) or a bearer session token (`set-auth-token`) for clients without cookies.
+- Register and login return `{ user, token, expiresAt }`. The token is an HS256 JWT signed with `JWT_SECRET` (`signAccessToken` in `backend-common`), with claims `sub` (user id), `name`, `email`, `role`; it lives `JWT_TTL_SECONDS` (default 24 h). There is no refresh token: when it expires the user signs in again.
+- Every backend verifies the token locally with `verifyAccessToken` and the same `JWT_SECRET`; none of them calls the auth service per request.
+- The web apps keep the token in the `access_token` cookie (written by `createAuthClient` in `frontend-common`), so every app on the same host shares one sign-in.
+
+## Passwords
+
+- Stored as `scrypt:<salt>:<hash>` with a random 16-byte salt per password.
+- An unknown email is hashed anyway before the 401, so it answers as slowly as a wrong password.
+
+## Interfaces
+
+- Endpoints: [api.md](api.md)
+- Data: [data-model.md](data-model.md)
+- Environment: [configuration.md](configuration.md)

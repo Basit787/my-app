@@ -27,8 +27,7 @@
   "dependencies": {
     "my-ui": "workspace:*",
     "ports": "workspace:*",
-    "axios": "*",
-    "date-fns": "*"
+    "axios": "*"
   },
   "peerDependencies": {
     "@tanstack/react-query": "*",

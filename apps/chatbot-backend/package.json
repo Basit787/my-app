@@ -12,8 +12,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -22,10 +20,12 @@
   "dependencies": {
     "backend-common": "workspace:*",
     "ports": "workspace:*",
+    "@langchain/community": "*",
     "@langchain/core": "*",
     "@langchain/langgraph": "*",
     "@langchain/langgraph-checkpoint-postgres": "*",
     "@langchain/openai": "*",
+    "@langchain/textsplitters": "*",
     "@nestjs/common": "*",
     "@nestjs/config": "*",
     "@nestjs/core": "*",
@@ -37,9 +37,11 @@
     "class-transformer": "*",
     "class-validator": "*",
     "helmet": "*",
-    "jose": "*",
+    "pg": "*",
     "reflect-metadata": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "zod": "*",
+    "prisma": "*"
   },
   "devDependencies": {
     "eslint-config": "workspace:*",
@@ -47,12 +49,9 @@
     "tsconfig": "workspace:*",
     "@nestjs/cli": "*",
     "@nestjs/schematics": "*",
-    "@nestjs/testing": "*",
     "@types/node": "*",
-    "prisma": "*",
-    "typescript": "*",
-    "vite": "*",
-    "vitest": "*"
+    "@types/pg": "*",
+    "typescript": "*"
   },
   "prettier": "prettier-config",
   "prisma": {

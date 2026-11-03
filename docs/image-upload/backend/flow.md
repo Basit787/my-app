@@ -5,8 +5,8 @@
 ```mermaid
 sequenceDiagram
     participant UI as Gallery
-    participant C as image.controller
-    participant M as MinIO
+    participant C as ImagesService
+    participant M as S3
     participant DB as PostgreSQL
     participant Q as publish-image queue
     UI->>C: POST /images (file, scheduledAt?)
@@ -22,5 +22,5 @@ sequenceDiagram
 ## Bin
 
 1. `DELETE /images/:id` sets `deletedAt`; the image moves to the bin.
-2. `POST /images/:id/restore` clears it; `DELETE /images/:id/permanent` removes the row and the MinIO object.
+2. `POST /images/:id/restore` clears it; `DELETE /images/:id/permanent` removes the row and the S3 object.
 3. The `purge-bin` job deletes everything binned longer than the retention period.

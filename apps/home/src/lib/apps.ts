@@ -1,4 +1,4 @@
-import { serviceUrl } from "ports";
+import { serviceUrl } from "frontend-common";
 import { Bot, FileText, Images, Link2, ReceiptText, type LucideIcon } from "lucide-react";
 
 export type AppEntry = {

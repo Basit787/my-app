@@ -1,5 +1,5 @@
 import { MyUiBreadcrumb } from "my-ui";
-import { serviceUrl } from "ports";
+import { serviceUrl } from "../lib/service-url";
 
 type AppBreadcrumbsProps = {
   // Current app, e.g. "Chat"; leave out on the home launcher itself

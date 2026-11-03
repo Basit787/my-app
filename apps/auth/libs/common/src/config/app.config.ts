@@ -1,4 +1,5 @@
-import { localAppOrigins, PORTS } from "ports";
+import { localAppOrigins } from "backend-common";
+import { PORTS } from "ports";
 import { registerAs, type ConfigType } from "@nestjs/config";
 
 const list = (value: string | undefined, fallback: string[]) =>
@@ -22,12 +23,12 @@ export const appConfig = registerAs("app", () => ({
   // Sent as the Origin by the mobile app, since native requests have none
   mobileAppOrigin: process.env.MOBILE_APP_ORIGIN || "chatwave://",
   // Profile photos
-  minio: {
-    endpoint: process.env.MINIO_ENDPOINT?.trim() || "http://localhost:9000",
-    accessKey: process.env.MINIO_ACCESS_KEY || process.env.MINIO_ROOT_USER || "minioadmin",
-    secretKey: process.env.MINIO_SECRET_KEY || process.env.MINIO_ROOT_PASSWORD || "minioadmin",
-    bucket: process.env.MINIO_BUCKET || "auth",
-    region: process.env.MINIO_REGION || "us-east-1",
+  s3: {
+    endpoint: process.env.S3_ENDPOINT?.trim() || "",
+    accessKey: process.env.S3_ACCESS_KEY_ID || "test",
+    secretKey: process.env.S3_SECRET_ACCESS_KEY || "test",
+    bucket: process.env.S3_BUCKET || "auth",
+    region: process.env.S3_REGION || "us-east-1",
   },
 }));
 

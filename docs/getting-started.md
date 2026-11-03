@@ -2,50 +2,65 @@
 
 ## Prerequisites
 
-- Docker Desktop with at least 12 GB of memory (Settings → Resources); the local AI model is killed when Docker runs out of memory.
-- Node.js 20+ and pnpm 10.12.1 for running tools outside Docker.
-- Python 3.12 only for running the AI summary backend outside Docker.
+- Docker Desktop.
+- Node.js 24.22.1+ (`nvm use` reads `.nvmrc`) and pnpm 10.12.1 for running tools outside Docker.
+- Ollama (with `qwen2.5:0.5b` and `nomic-embed-text` pulled) and SearXNG (JSON format enabled), reachable at `OLLAMA_URL` / `SEARXNG_URL` in the root `.env`.
 
 ## Run everything
 
 ```bash
 pnpm install
-make            # builds and starts the whole dev stack with hot reload
-make logs       # follow the app containers
-make down       # stop
+make                      # builds and starts the whole dev stack with hot reload
+docker compose -f docker-compose.dev.yml logs -f    # follow the containers
+make down                 # stop
 ```
 
-Each app reads an optional `.env` (copy its `.env.example`); the defaults work for local development. The first start downloads the AI model (~1 GB).
+Each app reads an optional `.env` (copy its `.env.example`); the defaults work for local development. The Docker stack reads the root `.env`, which `make` copies from the root `.env.example` the first time.
 
 ## URLs
 
-- Home (launcher): `http://localhost:3000`
-- Auth API: `http://localhost:3001` (Swagger `/api/docs`)
-- Chat API: `http://localhost:3002` (Swagger `/docs`); chat UI: `http://localhost:3003`
-- Link shortener: `http://localhost:3004`
-- Image upload UI: `http://localhost:3005`; API: `http://localhost:3006`
-- AI summary UI: `http://localhost:3007`; API: `http://localhost:3008` (`/docs`)
-- Chatbot UI: `http://localhost:3009`; API: `http://localhost:3010` (Swagger `/docs`)
-- MongoDB `localhost:27018`, PostgreSQL `localhost:5433`, MinIO `http://localhost:9000` (console `9001`), Redis `localhost:6379`, Ollama `http://localhost:11434`
+- Home (sign-in and launcher): `http://localhost:3000`
+- Auth API: `http://localhost:3001` (Swagger `/docs`)
+- Link shortener: `http://localhost:3004`, API `http://localhost:3012`
+- Image upload: `http://localhost:3005`, API `http://localhost:3006`
+- AI summary: `http://localhost:3007`, API `http://localhost:3008`
+- Chatbot: `http://localhost:3009`, API `http://localhost:3010`
+- Invoices: `http://localhost:3014`, API `http://localhost:3013`
+- Every API serves Swagger at `/docs`.
+- PostgreSQL `localhost:5433`, Redis `localhost:6379`; Ollama and SearXNG at `OLLAMA_URL` / `SEARXNG_URL` from the root `.env`
 
-Sign in with the seeded admin `admin@chat.local` / `Admin123!`, or sign up.
+Sign in once on any app; the others on the same host are signed in too. Every API answers 401 without a token.
+
+## Accounts and demo data
+
+- Register on any app's login screen; nothing is seeded in the auth service.
+- The link shortener, image upload, AI summary and chatbot backends run `prisma db seed` on start. The seed logs in as `admin@chat.local` / `Admin123!`, `alice@chat.local` / `Alice123!` and `bob@chat.local` / `Bob12345!` and adds demo data for each; it is skipped until those accounts are registered. Run it again later with `pnpm --filter <app> db:seed`.
+
+## Other devices on the same Wi-Fi
+
+1. Find the Mac's Wi-Fi address: `ipconfig getifaddr en0` (for example `10.10.40.187`).
+2. On any device on that Wi-Fi, open `http://10.10.40.187:3000` and sign in; the app cards open the other apps on the same address (`http://10.10.40.187:3009`, …).
+
+- The dev servers listen on every interface and accept IP addresses; links between apps use the address the page was opened from (`serviceUrl`).
+- The sign-in is per address: `localhost` and the Wi-Fi address each need their own.
+- If macOS's firewall is on, allow incoming connections for Docker (System Settings → Network → Firewall).
 
 ## Everyday commands
 
 ```bash
-make rebuild                                  # after changing dependencies (npm or requirements.txt)
-pnpm turbo run typecheck lint                 # every TS app and package
-pnpm lint && pnpm format                      # also runs ruff for the Python app
-pnpm --filter @chat/chat-app-backend test     # vitest (also auth, chatbot-backend)
-make clean                                    # delete node_modules, dist, .next, .venv and caches
+make rebuild                                     # after changing dependencies
+pnpm turbo run typecheck lint                    # every app and package
+pnpm format                                      # Prettier everywhere
+pnpm --filter @chat/chatbot-backend db:migrate   # new Prisma migration (every backend has one)
+make clean                                       # delete node_modules, dist and caches; `make install` afterwards
 ```
 
 ## Without Docker
 
 ```bash
-make infra                                    # databases, MinIO, Redis, coturn, Ollama only
-pnpm turbo run dev                            # every Node app with watchers
-make -C apps/ai-summary-backend install dev   # the Python API
+docker compose -f docker-compose.dev.yml up -d postgres redis   # shared services only
+pnpm turbo run dev                                     # every app and package watcher; DATABASE_URL etc. from each app's .env
 ```
 
-Uncomment the "Without Docker only" block of each app's `.env.example` into its `.env`.
+- Copy each app's `.env.example` to `.env`; the defaults point at `localhost`.
+- The chatbot needs Poppler (`brew install poppler`); the invoice backend needs Poppler and Tesseract (`brew install poppler tesseract`).

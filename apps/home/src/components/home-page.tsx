@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LayoutGrid, List } from "lucide-react";
 import { AppHeader, MobileBottomNav, useAuth } from "frontend-common";
 import { cn, MyUiToggleGroup } from "my-ui";
 import { AppCard } from "@/components/app-card";
 import { APPS } from "@/lib/apps";
-import { warmApp } from "@/lib/warm-app";
 
 type Layout = "grid" | "list";
 
@@ -31,9 +30,6 @@ export const HomePage = () => {
       // Private mode: the choice just isn't remembered
     }
   };
-
-  // Start every app's server warming as soon as home is shown
-  useEffect(() => APPS.forEach((app) => warmApp(app.url)), []);
 
   return (
     <div className="min-h-dvh bg-background">

@@ -1,12 +1,15 @@
 import type { KeyboardEvent } from "react";
+import { useSearch } from "@tanstack/react-router";
 import { ArrowUp, Square } from "lucide-react";
 import { MyUiButton, useAppForm } from "my-ui";
 import { useChatStream } from "@/features/chat/api/hooks";
 import { useChatStreamStore } from "@/features/chat/store/chat-stream-store";
+import { DocumentsPanel } from "./documents-panel";
+import { UploadDocumentButton } from "./upload-document-button";
 
-// Enter sends, Shift+Enter adds a line; while a reply streams the button stops it
 export const ChatComposer = () => {
   const chat = useChatStream();
+  const conversationId = useSearch({ from: "/", select: (search) => search.c });
   const isStreaming = useChatStreamStore((state) => state.streamingText !== null);
 
   const form = useAppForm({
@@ -29,8 +32,10 @@ export const ChatComposer = () => {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-4">
+      <DocumentsPanel conversationId={conversationId} />
       <form.AppForm>
         <form.Form className="flex items-end gap-2">
+          <UploadDocumentButton />
           <form.AppField name="message">
             {(field) => (
               <field.TextareaField

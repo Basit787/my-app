@@ -18,7 +18,7 @@ import {
   useTheme,
   type Theme,
 } from "my-ui";
-import { serviceUrl } from "ports";
+import { serviceUrl } from "../lib/service-url";
 import { AccountSettings } from "../auth/react/account-settings";
 import { useAuth } from "../auth/react/use-auth";
 import { THEMES } from "./themes";

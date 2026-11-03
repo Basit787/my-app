@@ -7,7 +7,7 @@ import { verifyPassword } from "../auth/utils/verify-password.js";
 
 const AVATAR_FOLDER = "avatars";
 
-// Profile photo (MinIO) and account deletion
+// Profile photo (S3) and account deletion
 @Injectable()
 export class AccountService {
   private readonly logger = new Logger(AccountService.name);

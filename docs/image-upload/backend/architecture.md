@@ -1,21 +1,19 @@
 # Image upload API — architecture
 
-Hono API on port `3006` with Prisma (PostgreSQL), MinIO for the bytes and BullMQ (Redis) for scheduled work.
+NestJS 12 service on port `3006` (Swagger at `/docs`) with Prisma (PostgreSQL), S3 for the bytes and BullMQ (Redis) for scheduled work.
 
 ## Layout
 
-- `src/app.ts` — Hono app: secure headers, CORS, `/health`, `/images` routes, JSON 404 and `errorHandler` (`{ error }`).
-- `src/routes/image.routes.ts` → `src/controllers/image.controller.ts` (validation with zod, auth with `requireAuth`) → `src/models/image.model.ts` (Prisma queries) → `src/views/image.view.ts` (DTOs).
-- `src/middleware/` — `require-auth.ts` (bearer token via `lib/auth/access-token-verifier.ts` from `backend-common/auth`), `zod-validator.ts`, `error-handler.ts`.
-- `src/queues/` + `src/jobs/` — `publish-image` (delayed job per scheduled upload) and `purge-bin` (repeating, `BIN_PURGE_CRON`, deletes images binned more than `BIN_RETENTION_DAYS` ago), built with `createJobQueue` from `backend-common`.
-- `src/prisma/` — schema and migrations (applied on start); client generated to `src/generated`.
+- `src/images/` — `ImagesController` (`/images`), `ImagesService` (list, counts, upload, file stream, bin, restore, purge), DTOs, `utils/` (`toImageDto`, `addDays`).
+- `src/images/queues/` — two BullMQ queues built with `createJobQueue` from `backend-common`, started with the module:
+  - `PublishImageQueue` — one delayed job per scheduled upload (job id = image id); at `scheduledAt` the image turns `active`.
+  - `PurgeBinQueue` — repeating job on `BIN_PURGE_CRON` that deletes images binned more than `BIN_RETENTION_DAYS` ago from S3, then their rows.
+- `ImagesModule` registers multer through `createUploadOptions` (images only, up to `MAX_FILE_SIZE_MB`).
+- `libs/common` (`@app/common`) — `appConfig` and re-exports from `backend-common`; `libs/db` (`@app/db`) — `PrismaService`, `ImageRepository`; `libs/storage` (`@app/storage`) — the shared S3 module on bucket `image-uploads`.
+- `prisma/` — schema, migrations (applied on start), `seed.mjs` with images from `prisma/seed-assets/`.
 
 ## Interfaces
 
 - Endpoints: [api.md](api.md)
 - Data: [data-model.md](data-model.md)
 - Environment: [configuration.md](configuration.md)
-
-## Infrastructure
-
-- Owns the Redis container (`6379`) in its compose files; uses PostgreSQL (link-shortener) and MinIO (chat-app-backend).

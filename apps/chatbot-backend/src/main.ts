@@ -29,7 +29,7 @@ async function bootstrap() {
   setupSwagger(app, {
     title: "Chatbot API",
     description:
-      "Conversations with a local AI model (Ollama) through LangGraph; messages are persisted per conversation.",
+      "Conversations with a local AI model (Ollama) through LangGraph; messages are persisted per conversation, and documents uploaded to a conversation are retrieved from pgvector to answer (RAG).",
   });
 
   await app.listen(config.port);

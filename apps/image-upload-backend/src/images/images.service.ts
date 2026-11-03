@@ -40,7 +40,7 @@ export class ImagesService {
     return { active, scheduled, bin };
   }
 
-  // Stores the bytes in MinIO and the metadata in PostgreSQL; a scheduled upload is published by the queue
+  // Stores the bytes in S3 and the metadata in PostgreSQL; a scheduled upload is published by the queue
   async upload(userId: string, file: UploadedFileData | undefined, scheduledAtText?: string): Promise<ImageDto> {
     if (!file) throw invalidField("file", "No image uploaded");
     if (file.size === 0) throw invalidField("file", "The file is empty");
@@ -84,7 +84,7 @@ export class ImagesService {
     return this.toDto(await this.images.restore(image.id));
   }
 
-  // Deletes a binned image for good: the object in MinIO, then its row
+  // Deletes a binned image for good: the object in S3, then its row
   async purge(id: string, userId: string): Promise<boolean> {
     const image = await this.images.findOwned(id, userId);
     if (!image?.deletedAt) return false;

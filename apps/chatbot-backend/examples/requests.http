@@ -1,0 +1,90 @@
+# Example calls to the chatbot API with documents (VS Code REST Client or JetBrains HTTP client); run top to bottom
+@auth = http://localhost:3001/api
+@api = http://localhost:3010
+
+### Sign in as the seeded admin; the token is reused below
+# @name login
+POST {{auth}}/auth/login
+Content-Type: application/json
+
+{ "email": "admin@chat.local", "password": "Admin123!" }
+
+###
+@token = {{login.response.body.token}}
+
+### Start a conversation
+# @name conversation
+POST {{api}}/conversations
+Authorization: Bearer {{token}}
+
+###
+@conversationId = {{conversation.response.body.id}}
+
+### Add the handbook; it is chunked and embedded before this returns
+# @name document
+POST {{api}}/conversations/{{conversationId}}/documents
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=rag
+
+--rag
+Content-Disposition: form-data; name="file"; filename="company-handbook.md"
+Content-Type: text/markdown
+
+< ./documents/company-handbook.md
+--rag--
+
+### Add the product FAQ
+POST {{api}}/conversations/{{conversationId}}/documents
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=rag
+
+--rag
+Content-Disposition: form-data; name="file"; filename="product-faq.txt"
+Content-Type: text/plain
+
+< ./documents/product-faq.txt
+--rag--
+
+### List the conversation's documents
+GET {{api}}/conversations/{{conversationId}}/documents
+Authorization: Bearer {{token}}
+
+### Ask a question: NDJSON lines with the sources, the reply deltas, then "done"
+POST {{api}}/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "content": "How many days of annual leave do I get, and how many carry over?" }
+
+### A question the FAQ answers
+POST {{api}}/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "content": "How often should the S2 filter be replaced and what does a new one cost?" }
+
+### A question no document covers: the answer says so
+POST {{api}}/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "content": "What is the capital of Australia?" }
+
+### Tool calling: the model calls web_search (SearXNG); the stream shows a "tool" line before the reply
+POST {{api}}/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "content": "Search the web: what is the latest stable version of Node.js?" }
+
+### The stored messages, each reply with its sources
+GET {{api}}/conversations/{{conversationId}}
+Authorization: Bearer {{token}}
+
+### Remove the handbook (its chunks and file go too)
+DELETE {{api}}/conversations/{{conversationId}}/documents/{{document.response.body.id}}
+Authorization: Bearer {{token}}
+
+### Delete the conversation with its messages and documents
+DELETE {{api}}/conversations/{{conversationId}}
+Authorization: Bearer {{token}}

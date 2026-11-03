@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
-import { deployedDomain } from "ports";
+import { deployedDomain } from "../lib/deployed-domain";
 import { Toaster, TooltipProvider, ThemeProvider } from "my-ui";
 import type { AuthClient } from "../auth/client";
 import { AuthProvider } from "../auth/react/auth-provider";

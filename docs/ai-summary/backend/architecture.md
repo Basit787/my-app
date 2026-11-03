@@ -1,28 +1,28 @@
 # AI summary API — architecture
 
-Python 3.12 FastAPI service on port `3008` (OpenAPI docs at `/docs`). Stores uploaded `.txt` files, summarizes them with a local Ollama model in the background and pushes status changes to the browser.
+NestJS 12 service on port `3008` (Swagger at `/docs`). Stores uploaded `.txt` files, summarizes them with the local Ollama model in the background and pushes status changes to the browser over Server-Sent Events.
 
-## Layout (fast-api-crud structure)
+## Layout
 
-- `src/main.py` — app, lifespan (create database and tables, MinIO bucket, Redis ping, resume unfinished documents), CORS, error handlers, routers.
-- `src/core/` — `database.py` (SQLAlchemy engine, `SessionLocal`, `Base`), `repository.py` (`BaseRepository`), `deps.py` (`AuthRequired`), `errors.py` (`{ error, details? }`), `redis_client.py`.
-- `src/router/documents/` — `model.py`, `schema.py` (camelCase replies), `repository.py`, `service.py`, `dependencies.py`, `route.py`, `summarizer.py` (background job), `events.py` (publishers).
-- `src/router/events/route.py` — `GET /events` (SSE).
-- `src/security/` — access-token verification against the auth JWKS (`PyJWT`), `AuthUser`.
-- `src/helpers/` — `storage.py` (MinIO via boto3), `llm.py` (`openai` SDK → `{OLLAMA_URL}/v1`, chunking), `events.py` (Redis pub/sub broker).
-- `src/utils/` — `env.py` (python-decouple), `init_db.py`.
+- `src/documents/` — `DocumentsController` (`/documents`), `DocumentsService` (upload, list, get, retry, delete, the background summary and `resumePending`), DTOs, `types/document-event.ts`, `utils/` (`readText`, `toDocumentDto`).
+- `src/events/` — `EventsController` (`GET /events`) and `EventsService`: one `PassThrough` stream per open page, returned as a `StreamableFile` (`text/event-stream`), fed from the user's Redis channel, with a `: ping` every 15 s.
+- `src/main.ts` — after listening, calls `DocumentsService.resumePending()` so documents left `UPLOADED` or `PROCESSING` by a restart are summarized again.
 
-## Data and services
+## Libraries (`libs/`, `@app/<name>`)
 
-- PostgreSQL database `ai_summary` (table `documents`: owner, filename, storage key, size, status, summary).
-- MinIO bucket `ai-summaries` for the text; Redis channels `ai-summary:events:<userId>`; Ollama (`qwen2.5:1.5b` by default) defined in this app's compose files with `ollama-init` pulling the model.
+- `@app/common` — `appConfig` and re-exports from `backend-common`.
+- `@app/db` — `PrismaService`, `DocumentRepository`; schema, migrations and `seed.mjs` in `prisma/`.
+- `@app/storage` — the shared S3 module on bucket `ai-summaries`.
+- `@app/events` — `EventBrokerService`: Redis pub/sub on `ai-summary:events:<userId>`, so jobs and streams can run in different processes. Startup fails with a clear error when Redis is unreachable.
+- `@app/llm` — `SummaryModelService`: LangChain `ChatOpenAI` at `{OLLAMA_URL}/v1` (`apiKey` ignored by Ollama). Text up to 12,000 characters is summarized in one call; longer text in 12k-character parts whose summaries are combined (again in parts when needed). Errors carry Ollama's own message.
+
+## Background work
+
+- A summary starts in the background right after the upload (or retry) reply; resumed documents run one after another. Each step is logged with the document id.
+- A failure never throws out of the job: the document becomes `FAILED` and the cause is logged.
 
 ## Interfaces
 
 - Endpoints: [api.md](api.md)
 - Data: [data-model.md](data-model.md)
 - Environment: [configuration.md](configuration.md)
-
-## Tooling
-
-- `Makefile`: `install`, `dev`, `start`, `lint`, `fix`, `format`, `format-check` (ruff); `package.json` maps them so `pnpm lint` / `pnpm format` include this app. Docker image from `docker/Dockerfile.python`.

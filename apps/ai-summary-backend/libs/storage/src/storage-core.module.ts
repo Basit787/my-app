@@ -1,8 +1,8 @@
 import { appConfig, type AppConfig } from "@app/common";
 import { ObjectStorageModule } from "backend-common";
 
-// Shared MinIO storage (backend-common) on this app's bucket: every uploaded document (PostgreSQL keeps only its key)
+// Shared S3 storage (backend-common) on this app's bucket: every uploaded document (PostgreSQL keeps only its key)
 export const StorageCoreModule = ObjectStorageModule.forRoot({
   inject: [appConfig.KEY],
-  useFactory: (config: AppConfig) => config.minio,
+  useFactory: (config: AppConfig) => config.s3,
 });

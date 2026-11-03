@@ -1,50 +1,41 @@
-# One image definition for every backend in apps/ (NestJS). Pick the app with the APP build arg (its package name)
-# and the stage with `target`: `dev` (watch mode, used by docker-compose.yml) or `prod`. Build context: repo root.
-#
-#   docker build -f docker/backend/Dockerfile --build-arg APP=@chat/auth --target prod .
-#
-# Each app defines how it runs through its own package.json scripts: `dev`, `build` and `start`.
-ARG NODE_IMAGE=node:20-alpine
+ARG NODE_IMAGE=node:24.22.1-alpine
 
+# Base: Node with pnpm
 FROM ${NODE_IMAGE} AS base
 RUN corepack enable pnpm
 ENV TURBO_TELEMETRY_DISABLED=1
-
-# Every package.json plus the lockfile: the install below reruns only when dependencies change
-FROM base AS manifests
 WORKDIR /repo
-COPY . .
-RUN mkdir /out \
-  && find . -name package.json -not -path "*/node_modules/*" | tar -cf - -T - | tar -xf - -C /out \
-  && cp pnpm-lock.yaml pnpm-workspace.yaml /out/
 
-# One install for the whole workspace, shared by every backend image (APP is only set after it);
-# the cache mount keeps downloaded packages between builds
+# Deps: download packages from the lockfile, install the workspace, build the shared packages
 FROM base AS deps
-WORKDIR /repo
-COPY --from=manifests /out/ .
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile --store-dir /pnpm/store
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --store-dir /pnpm/store
 COPY . .
-# Shared packages built once here; containers then start from turbo's cache instead of each rebuilding them
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --offline --frozen-lockfile --store-dir /pnpm/store
 RUN pnpm turbo run build --filter="./packages/*"
 
-# Dev: the app's `dev` script; docker-compose.yml mounts the app folder and the packages' dist/
+# Dev: run the app's dev script (watch mode)
 FROM deps AS dev
 ARG APP
-# Extra Alpine packages for one app, e.g. Tesseract and Poppler for the invoice backend
 ARG SYSTEM_PACKAGES=""
 RUN if [ -n "$SYSTEM_PACKAGES" ]; then apk add --no-cache $SYSTEM_PACKAGES; fi
 ENV APP=${APP}
 CMD pnpm --filter "${APP}" dev
 
+# Build: compile the app, then copy it with only its production dependencies to /out
 FROM deps AS build
 ARG APP
 RUN pnpm turbo run build --filter="${APP}"
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+  pnpm --filter "${APP}" deploy --prod --legacy --store-dir /pnpm/store /out \
+  && cp -r "$(pnpm --filter "${APP}" exec pwd)/dist" /out/ \
+  && cd /out && npx prisma generate
 
-# Prod: migrations on start, then node dist/src/main.js (the app's `start` script)
-FROM build AS prod
-ARG APP
+# Prod: the deployed app; migrations on start, then the app
+FROM ${NODE_IMAGE} AS prod
 ARG SYSTEM_PACKAGES=""
 RUN if [ -n "$SYSTEM_PACKAGES" ]; then apk add --no-cache $SYSTEM_PACKAGES; fi
-ENV APP=${APP} NODE_ENV=production
-CMD pnpm --filter "${APP}" start
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /out .
+CMD ["npm", "start"]

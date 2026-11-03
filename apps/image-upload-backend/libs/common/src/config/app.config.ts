@@ -1,4 +1,5 @@
-import { localAppOrigins, PORTS } from "ports";
+import { localAppOrigins } from "backend-common";
+import { PORTS } from "ports";
 import { registerAs, type ConfigType } from "@nestjs/config";
 
 // Read once at startup; inject with @Inject(appConfig.KEY) for a typed AppConfig
@@ -14,12 +15,12 @@ export const appConfig = registerAs("app", () => ({
   // Binned images are purged from the bucket after this many days, checked on this cron pattern
   binRetentionDays: Number(process.env.BIN_RETENTION_DAYS) || 30,
   binPurgeCron: process.env.BIN_PURGE_CRON || "0 * * * *",
-  minio: {
-    endpoint: process.env.MINIO_ENDPOINT?.trim() || "http://localhost:9000",
-    accessKey: process.env.MINIO_ACCESS_KEY || process.env.MINIO_ROOT_USER || "minioadmin",
-    secretKey: process.env.MINIO_SECRET_KEY || process.env.MINIO_ROOT_PASSWORD || "minioadmin",
-    bucket: process.env.MINIO_BUCKET || "image-uploads",
-    region: process.env.MINIO_REGION || "us-east-1",
+  s3: {
+    endpoint: process.env.S3_ENDPOINT?.trim() || "",
+    accessKey: process.env.S3_ACCESS_KEY_ID || "test",
+    secretKey: process.env.S3_SECRET_ACCESS_KEY || "test",
+    bucket: process.env.S3_BUCKET || "image-uploads",
+    region: process.env.S3_REGION || "us-east-1",
   },
 }));
 

@@ -1,27 +1,23 @@
 # Auth service — API
 
-Base URL `http://localhost:3001`; apps call it as `/auth-api/...` (their proxy rewrites to `/api/...`). Errors are `{ error, details? }`.
+Base URL `http://localhost:3001/api`; web apps call it as `/auth-api/...` (their Vite proxy rewrites to `/api/...`). Swagger at `http://localhost:3001/docs`. Errors are `{ error, details? }`; validation failures are `400 { error: "Invalid request", details }`.
 
-## better-auth (`/api/auth/*`)
+## Sign-in (`/api/auth`, 10 requests a minute per client)
 
-- `POST /api/auth/sign-up/email` `{ name, email, password }`
-- `POST /api/auth/sign-in/email` `{ email, password }` → session cookie (and `set-auth-token` header for bearer sessions)
-- `POST /api/auth/sign-out`, `GET /api/auth/get-session`, plus better-auth's account routes (documented by hand in `src/swagger.ts`)
-
-## Session and tokens
-
-- `GET /api/session` → `{ authenticated, user: { id, name, email, image, role } | null }`
-- `POST /api/token` (session required) → `{ accessToken, expiresAt, user }`; rotates the refresh-token cookie; 401 when the session ended
-- `POST /api/logout` → `{ ok: true }`; deletes the session and the refresh token, clears cookies
-
-## Keys
-
-- `GET /.well-known/jwks.json` → the public EdDSA key(s) every API uses to verify access tokens
+- Public `POST /api/auth/register` `{ name, email, password }` → `201 SignInReply`; `name` is 2–32 letters, digits, `-` or `_`, `password` 8–128 characters; `409` when the email or name is taken
+- Public `POST /api/auth/login` `{ email, password }` → `200 SignInReply`; `401` for a wrong email or password
+- `GET /api/auth/me` → `AuthUser`; `401` when the account no longer exists
 
 ## Account
 
-- `POST /api/account/avatar` (multipart `file`) → updated user image
-- `DELETE /api/account/avatar` → `{ ok: true }`
-- Public `GET /api/avatars/:userId` → image bytes
+- `POST /api/account/avatar` (multipart `photo`, an image up to 5 MB) → `AuthUser` with the new `image`
+- `DELETE /api/account/avatar` → `AuthUser`
+- `DELETE /api/account` `{ password }` → `{ ok: true }`; deletes the user and the photo; `401` for a wrong password
+- Public `GET /api/avatars/:userId` → image bytes; `404` when there is none
 
-Swagger: `http://localhost:3001/api/docs`.
+## Types
+
+- `SignInReply`: `{ user: AuthUser, token, expiresAt }` (`expiresAt` in epoch milliseconds)
+- `AuthUser`: `{ id, name, email, role: "user" | "admin", image }`; `image` is `/avatars/<id>?v=<updatedAt>` relative to the API, or `""`
+
+Every other route needs `Authorization: Bearer <token>`.

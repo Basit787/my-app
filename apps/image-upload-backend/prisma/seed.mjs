@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma-app/client";
 import { createJobQueue, createObjectStorage } from "backend-common";
 import { readFile } from "node:fs/promises";
 
-// `prisma db seed` (pnpm db:seed): needs PostgreSQL (migrated), MinIO, Redis and the auth service (seeded first)
+// `prisma db seed` (pnpm db:seed): needs PostgreSQL (migrated), S3, Redis and the auth service (seeded first)
 const DATABASE_URL = process.env.DATABASE_URL || "postgres://postgres:postgres@127.0.0.1:5433/image_upload";
 // The auth service the demo users sign in on
 const AUTH_URL = process.env.AUTH_URL || "http://localhost:3001";
@@ -41,11 +41,11 @@ const SEED_IMAGES = [
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
 const storage = createObjectStorage({
-  endpoint: process.env.MINIO_ENDPOINT || "http://localhost:9000",
-  accessKey: process.env.MINIO_ACCESS_KEY || "minioadmin",
-  secretKey: process.env.MINIO_SECRET_KEY || "minioadmin",
-  bucket: process.env.MINIO_BUCKET || "image-uploads",
-  region: process.env.MINIO_REGION || "us-east-1",
+  endpoint: process.env.S3_ENDPOINT?.trim() || "",
+  accessKey: process.env.S3_ACCESS_KEY_ID || "test",
+  secretKey: process.env.S3_SECRET_ACCESS_KEY || "test",
+  bucket: process.env.S3_BUCKET || "image-uploads",
+  region: process.env.S3_REGION || "us-east-1",
 });
 // Only enqueues; the running app's PublishImageQueue worker publishes the scheduled image
 const publishImageQueue = createJobQueue("publish-image", async () => {}, { redisUrl: REDIS_URL });

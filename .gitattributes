@@ -1,0 +1,2 @@
+# The Makefile keeps LF endings on Windows checkouts, so make in WSL can run it
+Makefile text eol=lf

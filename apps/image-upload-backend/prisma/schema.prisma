@@ -13,7 +13,7 @@ enum ImageStatus {
   active
 }
 
-// Metadata of an uploaded image; the bytes live in MinIO under `storedName`
+// Metadata of an uploaded image; the bytes live in S3 under `storedName`
 model Image {
   id           String      @id @default(uuid())
   userId       String      @map("user_id")

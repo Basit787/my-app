@@ -5,10 +5,10 @@
 ```mermaid
 sequenceDiagram
     participant UI as Documents page
-    participant R as documents route
-    participant M as MinIO
+    participant R as DocumentsService
+    participant M as S3
     participant DB as PostgreSQL
-    participant J as summarizer (background)
+    participant J as summarize (background)
     participant L as Ollama
     participant E as Redis
     UI->>R: POST /documents/upload (.txt, ≤1 MB)
@@ -16,7 +16,7 @@ sequenceDiagram
     R->>DB: document UPLOADED
     R->>E: document.updated
     R-->>UI: 201 document
-    R->>J: summarize_document(id)
+    R->>J: summarize(id)
     J->>DB: PROCESSING
     J->>E: document.updated
     J->>M: download text
@@ -41,4 +41,4 @@ sequenceDiagram
 ## Restarts and failures
 
 - Documents left UPLOADED or PROCESSING are resumed at startup.
-- A failed summary keeps status FAILED and logs the cause (Ollama's own message); `POST /documents/{id}/summarize` retries it.
+- A failed summary keeps status FAILED and logs the cause (Ollama's own message); `POST /documents/:id/summarize` retries it.

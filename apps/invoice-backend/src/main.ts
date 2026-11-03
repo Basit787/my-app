@@ -4,7 +4,7 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { securityHeaders, setupSwagger } from "backend-common";
 import { AppModule } from "./app.module.js";
-import { ExtractorService } from "./invoices/extractor.service.js";
+import { InvoicesService } from "./invoices/invoices.service.js";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -25,7 +25,7 @@ async function bootstrap() {
   await app.listen(config.port);
   Logger.log(`Invoice server http://localhost:${config.port} (docs at /docs)`, "Bootstrap");
   // Invoices a restart interrupted are read again
-  void app.get(ExtractorService).resumePending();
+  void app.get(InvoicesService).resumePending();
 }
 
 await bootstrap();

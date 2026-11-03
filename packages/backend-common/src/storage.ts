@@ -11,6 +11,7 @@ import {
 import {
   Inject,
   Injectable,
+  Logger,
   Module,
   NotFoundException,
   StreamableFile,
@@ -24,7 +25,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { HttpError } from "./errors.js";
 
-// Any S3-compatible store (MinIO, AWS S3, R2…).
+// Any S3-compatible store (AWS S3, MinIO, R2…).
 export type ObjectStorageConfig = {
   endpoint: string;
   region: string;
@@ -43,10 +44,11 @@ const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
 export const createObjectStorage = (config: ObjectStorageConfig) => {
   let client: S3Client | null = null;
+  let bucketReady = false;
   const Bucket = config.bucket;
 
   const getClient = (): S3Client => {
-    if (!config.endpoint) throw new Error("Object storage endpoint is required");
+    if (!config.endpoint) throw new HttpError(503, "Object storage is not configured: set S3_ENDPOINT");
     client ??= new S3Client({
       endpoint: config.endpoint,
       region: config.region,
@@ -63,11 +65,13 @@ export const createObjectStorage = (config: ObjectStorageConfig) => {
     } catch {
       await getClient().send(new CreateBucketCommand({ Bucket }));
     }
+    bucketReady = true;
   };
 
   const exists = async (key: string): Promise<boolean> => {
+    const s3 = getClient();
     try {
-      await getClient().send(new HeadObjectCommand({ Bucket, Key: key }));
+      await s3.send(new HeadObjectCommand({ Bucket, Key: key }));
       return true;
     } catch {
       return false;
@@ -75,12 +79,19 @@ export const createObjectStorage = (config: ObjectStorageConfig) => {
   };
 
   const put = async (key: string, body: Buffer, contentType?: string) => {
-    await getClient().send(new PutObjectCommand({ Bucket, Key: key, Body: body, ContentType: contentType }));
+    const s3 = getClient();
+    try {
+      if (!bucketReady) await ensureReady();
+      await s3.send(new PutObjectCommand({ Bucket, Key: key, Body: body, ContentType: contentType }));
+    } catch (error) {
+      throw new HttpError(503, `Object storage is unavailable: ${(error as Error).message}`);
+    }
   };
 
   const getObject = async (key: string): Promise<StoredObject | null> => {
+    const s3 = getClient();
     try {
-      const response = await getClient().send(new GetObjectCommand({ Bucket, Key: key }));
+      const response = await s3.send(new GetObjectCommand({ Bucket, Key: key }));
       if (!response.Body) return null;
       return {
         stream: response.Body as Readable,
@@ -170,18 +181,27 @@ export const entityObjectKey = (folder: string, id: string, originalName: string
 
 const OBJECT_STORAGE_OPTIONS = Symbol("OBJECT_STORAGE_OPTIONS");
 
-// The app's MinIO bucket as a Nest provider; the bucket is created on startup
+// The app's S3 bucket as a Nest provider; the bucket is created on startup when S3_ENDPOINT is reachable
 @Injectable()
 export class ObjectStorageService implements OnModuleInit {
   readonly bucket: ObjectStorage;
+  private readonly logger = new Logger(ObjectStorageService.name);
 
-  constructor(@Inject(OBJECT_STORAGE_OPTIONS) config: ObjectStorageConfig) {
-    if (!config.endpoint) throw new Error("MINIO_ENDPOINT is required. Uploads are stored in MinIO.");
+  constructor(@Inject(OBJECT_STORAGE_OPTIONS) private readonly config: ObjectStorageConfig) {
     this.bucket = createObjectStorage(config);
   }
 
   async onModuleInit() {
-    await this.bucket.ensureReady();
+    if (!this.config.endpoint) {
+      this.logger.warn("S3_ENDPOINT is not set; file uploads and downloads will fail");
+      return;
+    }
+    try {
+      await this.bucket.ensureReady();
+    } catch (error) {
+      const reason = (error as Error).message;
+      this.logger.error(`Bucket ${this.config.bucket} at ${this.config.endpoint} is unavailable: ${reason}`);
+    }
   }
 
   // An object as a StreamableFile, inline or as a download with its original name; 404 when missing
